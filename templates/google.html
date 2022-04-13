@@ -14,7 +14,7 @@
       }
 
       #panel {
-        width: 200px;
+        width: 190px;
         font-family: Arial, sans-serif;
         font-size: 13px;
         float: right;
@@ -38,20 +38,31 @@
         cursor: pointer;
       }
 
+      fieldset {
+        border: grey solid medium;
+        margin-right: 10px;
+        margin-left: 0;
+      }
+
       #delete-button {
         margin-top: 5px;
       }
     </style>
     <script type="text/javascript">
+      const FLY_ZONE_COLOR = '#32CD32';
+      const NO_FLY_ZONE_COLOR = '#FF1433';
       var drawingManager;
       var all_overlays = [];
       var selectedShape;
-      var colors = ['#FF1433', '#32CD32'];
+      var colors = [NO_FLY_ZONE_COLOR, FLY_ZONE_COLOR];
       var selectedColor;
       var colorButtons = {};
 
       function clearSelection() {
         if (selectedShape) {
+          if (selectedShape.type == google.maps.drawing.OverlayType.MARKER) {
+            return;
+          }
           selectedShape.setEditable(false);
           selectedShape = null;
         }
@@ -60,6 +71,9 @@
       function setSelection(shape) {
         clearSelection();
         selectedShape = shape;
+        if (shape.type == google.maps.drawing.OverlayType.MARKER) {
+          return;
+        }
         shape.setEditable(true);
         selectColor(shape.get('fillColor') || shape.get('strokeColor'));
       }
@@ -67,6 +81,7 @@
       function deleteSelectedShape() {
         if (selectedShape) {
           selectedShape.setMap(null);
+          all_overlays = all_overlays.filter(el => {return el.overlay !== selectedShape});
         }
       }
 
@@ -106,6 +121,9 @@
 
       function setSelectedShapeColor(color) {
         if (selectedShape) {
+          if (selectedShape.type == google.maps.drawing.OverlayType.MARKER) {
+            return;
+          }
           if (selectedShape.type == google.maps.drawing.OverlayType.POLYLINE) {
             selectedShape.set('strokeColor', color);
           } else {
@@ -155,7 +173,8 @@
         drawingManager = new google.maps.drawing.DrawingManager({
           drawingMode: google.maps.drawing.OverlayType.POLYGON,
           drawingControlOptions: {
-            drawingModes: [google.maps.drawing.OverlayType.POLYGON]
+            drawingModes: [google.maps.drawing.OverlayType.POLYGON,
+                           google.maps.drawing.OverlayType.MARKER]
           },
 
           markerOptions: {
@@ -170,11 +189,13 @@
           map: map
         });
 
+
+
         // drawingManager.
 
         google.maps.event.addListener(drawingManager, 'overlaycomplete', function(e) {
             all_overlays.push(e);
-            if (e.type != google.maps.drawing.OverlayType.MARKER) {
+            if (true) {
             // Switch back to non-drawing mode after drawing a shape.
             drawingManager.setDrawingMode(null);
 
@@ -230,29 +251,93 @@
         document.getElementById("rotation-line").innerHTML = `<line x1="${rot.x1}" y1="${rot.y1}" x2="${rot.x2}" y2="${rot.y2}" style="stroke:rgb(255,0,0);stroke-width:2" />`
       }
 
-      function validate_form_data(form_data) {
-        if (form_data["altitude"] < 1) {
-          alert("Altitude should be greater than 1");
-          return false;
+      function get_polygon_points(polygon) {
+        let res = [];
+        let points = polygon.latLngs.Dd[0].Dd;
+        for (let i = 0; i < points.length; ++i) {
+          res.push([points[i].lat(), points[i].lng()]);
         }
-
-
-
-        return true;
+        return res;
       }
+
 
       function generate_trajectories(e) {
         e.preventDefault();
-        let form_data = new FormData(e.target);
-        let value = Object.fromEntries(form_data.entries());
-        if (!validate_form_data(value)) {
-          return false;
+
+        let init_point;
+        let fly_zone;
+        let no_fly_zones = [];
+
+        let fly_zone_found = false;
+        let markers_found = 0;
+
+        for (let i = 0; i < all_overlays.length; ++i) {
+          let overlay = all_overlays[i].overlay;
+          console.log(overlay);
+          if (overlay.type == google.maps.drawing.OverlayType.MARKER) {
+            if (markers_found != 0) {
+              alert("There may be only one marker identifying the starting point...");
+              return;
+            }
+            markers_found++;
+            init_point = [overlay.position.lat(), overlay.position.lng()];
+          } else if (overlay.type == google.maps.drawing.OverlayType.POLYGON) {
+            if (overlay.fillColor == FLY_ZONE_COLOR) {
+              if (fly_zone_found) {
+                alert("There may not be more than 1 fly zone");
+                return;
+              }
+              fly_zone_found = true;
+              fly_zone = get_polygon_points(overlay);
+            } else {
+              no_fly_zones.push(get_polygon_points(overlay));
+            }
+          }
         }
 
+        if (!fly_zone_found) {
+          alert("There should be at least one fly zone");
+          return;
+        }
+        if (markers_found == 0) {
+          alert("No markers found. Set one as a starting position of the drone");
+          return;
+        }
+        fly_zone.push(fly_zone[0]);
+        for (let i = 0; i < no_fly_zones.length; ++i) {
+          no_fly_zones[i].push(no_fly_zones[i][0]);
+        }
+
+
+        let form_data = new FormData(e.target);
+        let value = Object.fromEntries(form_data.entries());
+        value["fly-zone"] = fly_zone;
+        value["no-fly-zones"] = no_fly_zones;
+        value["start-point"] = init_point;
+        console.log(value);
+
+
+        if (Object.values(value).indexOf("override-drone-spec") > -1) {
+          value["override-drone-spec"] = true;
+        } else {
+          value["override-drone-spec"] = false;
+        }
+
+        if (Object.values(value).indexOf("override-battery-model") > -1) {
+          value["override-battery-model"] = true;
+        } else {
+          value["override-battery-model"] = false;
+        }
+
+
+        console.log("Sendong", value);
         let req = new Request('/generate_trajectories', {
           method: 'POST',
-          body: JSON.stringify(data),
-        })
+          body: JSON.stringify(value),
+        });
+        fetch(req).then(response => {
+          console.log(response);
+        });
         return false;
       }
 
@@ -267,7 +352,14 @@
         <button id="delete-all-button">Delete All Shapes</button>
         <form onsubmit="generate_trajectories(event)"  method="post" id="path-planning-settings">
           <label for="n-uavs">Number of uavs: </label> <input type="number" min="0" step="1" placeholder="Number of drones" id="n-uavs" name="n-uavs"  required>
-          <label for="altitude">Drones altitude [m]: </label> <input type="number" min="1" step="1" placeholder="altitude" id="altitude" name="altitude"  required>
+          <label for="altitude">Drones altitude [m]: </label> <input
+
+
+
+
+
+ type="number" min="1" step="1" placeholder="altitude" id="altitude" name="altitude"  required>
+          <label for="sweeping-step">Sweeping step [m]: </label> <input type="number" min="1" step="0.1" placeholder="altitude" id="sweeping-step" name="sweeping-step"  required>
           <label for="init-rotation">Initial rotation [rad]: <span id="rotation-value"></span> </label><input type="range" min="0" max="3.14"
                                                                                                         step="0.01" name="init-rotation"
                                                                                                         value="0"
@@ -279,14 +371,24 @@
           </svg>
           <br>
           <br>
+          <fieldset>
+            <legend>Drone specification</legend>
+            <label for="override-drone-spec">Override drone specification? </label> <input type="checkbox" id="override-drone-spec" name="override-drone-spec">
+            <hr>
+            <label for="uav-area">Area of drone projection [m^2]: </label> <input type="number" min="0" placeholder="Drone area" id="uav-area" name="uav-area">
+            <label for="propeller-radius"> Propeller radius [m]: </label><input type="number" min="0" placeholder="Propeller radius" id="propeller-radius" name="propeller-radius">
+            <label for="n-propellers"> Number of propellers: </label><input type="number" min="1" step="1" placeholder="N of propellers" id="n-propellers" name="n-propellers">
+            <label for="uav-mass">UAV mass: [kg]: </label> <input type="number" min="0.01" step="0.01" placeholder="Weight" id="uav-mass" name="uav-mass">
+          </fieldset>
 
-          <label for="uav-area">Area of drone image [m^2]: </label> <input type="number" min="0" placeholder="Drone area" id="uav-area" name="uav-area" required>
-          <label for="propeller-radius"> Propeller radius [m]: </label><input type="number" min="0" placeholder="Propeller radius" id="propeller-radius" name="propeller-radius" required>
-          <label for="n-propellers"> Number of propellers: </label><input type="number" min="1" step="1" placeholder="N of propellers" id="n-propellers" name="n-propellers" required>
-          <label for="uav-weight">UAV weight: [kg]: </label> <input type="number" min="0.01" step="0.01" placeholder="Weight" id="uav-weight" name="uav-weight" required>
-          <label for="cells-in-parallel">Number of battery cells in parrallel: </label><input type="number" min="1" step="1" id="cells-in-parallel" name="cells-in-parallel" required>
-          <label for="cells-in-series">Number of cells in series: </label><input type="number" min="1" step="1" id="cells-in-series" name="cells-in-series" required>
-          <!-- TODO: make more fields (like maximum polygon area ...) here -->
+          <fieldset>
+            <legend>Battery model</legend>
+            <label for="override-battery-model">Override battery model parameters? </label><input type="checkbox" name="override-battery-model" id="override-battery-model">
+            <hr>
+            <label for="cells-in-series">Number of cells in series: </label><input type="number" min="1" step="1" id="cells-in-series" name="cells-in-series">
+            <label for="cell-capacity">Cell capacity [TODO: Wh???]: </label><input type="number" min="0" id="cell-capacity" name="cell-capacity">
+            <!-- TODO: make more fields (like maximum polygon area ...) here -->
+          </fieldset>
           <br>
           <br>
           <button type="submit">Generate trajectories</button>
