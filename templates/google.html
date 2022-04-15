@@ -57,6 +57,7 @@
       var colors = [NO_FLY_ZONE_COLOR, FLY_ZONE_COLOR];
       var selectedColor;
       var colorButtons = {};
+      var map;
 
       function clearSelection() {
         if (selectedShape) {
@@ -156,7 +157,7 @@
        }
 
       function initialize() {
-        var map = new google.maps.Map(document.getElementById('map'), {
+        map = new google.maps.Map(document.getElementById('map'), {
           zoom: 15,
           center: new google.maps.LatLng(49.361318, 14.266975),
           // disableDefaultUI: true,
@@ -165,7 +166,7 @@
 
         var polyOptions = {
           strokeWeight: 0,
-          fillOpacity: 0.45,
+          fillOpacity: 0.2,
           editable: true
         };
         // Creates a drawing manager attached to the map that allows the user to draw
@@ -181,7 +182,7 @@
             draggable: true
           },
           polylineOptions: {
-            editable: true
+            editable: false
           },
           rectangleOptions: polyOptions,
           circleOptions: polyOptions,
@@ -253,11 +254,58 @@
 
       function get_polygon_points(polygon) {
         let res = [];
-        let points = polygon.latLngs.Dd[0].Dd;
+        let points = polygon.getPath().getArray();
         for (let i = 0; i < points.length; ++i) {
           res.push([points[i].lat(), points[i].lng()]);
         }
         return res;
+      }
+
+      function hslToHex(h, s, l) {
+        l /= 100;
+        const a = s * Math.min(l, 1 - l) / 100;
+        const f = n => {
+          const k = (n + h / 30) % 12;
+          const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+          return Math.round(255 * color).toString(16).padStart(2, '0');   // convert to Hex and prefix "0" if needed
+        };
+        return `#${f(0)}${f(8)}${f(4)}`;
+      }
+
+
+      function get_distinguishable_colors(n_of_colors) {
+        if (n_of_colors == 0) {
+          return [];
+        }
+        let step = 360 / n_of_colors;
+        let res = [];
+        for (let i = 0; i < n_of_colors; ++i) {
+          res.push(hslToHex(step * i, 100, 50));
+        }
+        return res;
+      }
+
+      function clear_paths_from_map() {
+      }
+
+      function add_one_path(path, color) {
+        let path_tr = path.map(point => {return {lat: point[0], lng: point[1]}});
+        console.log(path_tr);
+        let coorindates = new google.maps.Polyline({
+          path: path_tr,
+          geodesic: true,
+          strokeColor: color,
+          strokeOpacity: 1.0,
+          strokeWeight: 2,
+        });
+        coorindates.setMap(map);
+      }
+
+      function draw_paths_on_map(paths) {
+        let colors = get_distinguishable_colors(paths.length);
+        for (let i = 0; i < paths.length; ++i) {
+          add_one_path(paths[i], colors[i]);
+        }
       }
 
 
@@ -271,6 +319,7 @@
         let fly_zone_found = false;
         let markers_found = 0;
 
+        console.log("HERE");
         for (let i = 0; i < all_overlays.length; ++i) {
           let overlay = all_overlays[i].overlay;
           console.log(overlay);
@@ -336,8 +385,15 @@
           body: JSON.stringify(value),
         });
         fetch(req).then(response => {
-          console.log(response);
-        });
+          return response.json();
+        }).then(data => {
+          console.log(data);
+          if (data.success != true) {
+            alert(`Error while generating paths: ${data.message}`);
+            return;
+          }
+          draw_paths_on_map(data.res);
+        })
         return false;
       }
 
@@ -352,13 +408,9 @@
         <button id="delete-all-button">Delete All Shapes</button>
         <form onsubmit="generate_trajectories(event)"  method="post" id="path-planning-settings">
           <label for="n-uavs">Number of uavs: </label> <input type="number" min="0" step="1" placeholder="Number of drones" id="n-uavs" name="n-uavs"  required>
-          <label for="altitude">Drones altitude [m]: </label> <input
+          <label for="altitude">Drones altitude [m]: </label> <input type="number" min="1" step="1" placeholder="altitude" id="altitude" name="altitude"  required>
+          <label for="rotations-per-cell">Sweeping rotations in each cell: </label> <input type="number" min="1" step="1" placeholder="Rotations" id="rotations-per-cell" name="rotations-per-cell" required>
 
-
-
-
-
- type="number" min="1" step="1" placeholder="altitude" id="altitude" name="altitude"  required>
           <label for="sweeping-step">Sweeping step [m]: </label> <input type="number" min="1" step="0.1" placeholder="altitude" id="sweeping-step" name="sweeping-step"  required>
           <label for="init-rotation">Initial rotation [rad]: <span id="rotation-value"></span> </label><input type="range" min="0" max="3.14"
                                                                                                         step="0.01" name="init-rotation"
