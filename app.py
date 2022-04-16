@@ -38,6 +38,7 @@ def generate_trajectories():
         generate_req.sweeping_step = float(json_data["sweeping-step"])
         generate_req.number_of_drones = int(json_data["n-uavs"])
         generate_req.rotations_per_cell = int(json_data["rotations-per-cell"])
+        generate_req.decomposition_rotation = float(json_data["init-rotation"])
 
 
         # TODO: check this. Maybe, give the choice to user

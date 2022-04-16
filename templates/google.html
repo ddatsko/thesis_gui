@@ -53,6 +53,7 @@
       const NO_FLY_ZONE_COLOR = '#FF1433';
       var drawingManager;
       var all_overlays = [];
+      var all_paths = [];
       var selectedShape;
       var colors = [NO_FLY_ZONE_COLOR, FLY_ZONE_COLOR];
       var selectedColor;
@@ -286,6 +287,8 @@
       }
 
       function clear_paths_from_map() {
+        all_paths.forEach(el => {el.setMap(null)});
+        all_paths = [];
       }
 
       function add_one_path(path, color) {
@@ -299,6 +302,7 @@
           strokeWeight: 2,
         });
         coorindates.setMap(map);
+        all_paths.push(coorindates);
       }
 
       function draw_paths_on_map(paths) {
@@ -312,6 +316,7 @@
       function generate_trajectories(e) {
         e.preventDefault();
 
+        clear_paths_from_map();
         let init_point;
         let fly_zone;
         let no_fly_zones = [];
@@ -319,7 +324,6 @@
         let fly_zone_found = false;
         let markers_found = 0;
 
-        console.log("HERE");
         for (let i = 0; i < all_overlays.length; ++i) {
           let overlay = all_overlays[i].overlay;
           console.log(overlay);
@@ -385,15 +389,20 @@
           body: JSON.stringify(value),
         });
         fetch(req).then(response => {
-          return response.json();
+          console.log(response);
+          if (response.status != 200) {
+            response.text().then(text => {alert(text)});
+            throw new Error();
+          } else {
+            return response.json();
+          }
         }).then(data => {
-          console.log(data);
           if (data.success != true) {
             alert(`Error while generating paths: ${data.message}`);
             return;
           }
           draw_paths_on_map(data.res);
-        })
+        }).catch(er => {})
         return false;
       }
 
@@ -405,7 +414,8 @@
       <div id="color-palette"></div>
       <div>
         <button id="delete-button">Delete Selected Shape</button>
-        <button id="delete-all-button">Delete All Shapes</button>
+        <button id="delete-all-button">Delete all shapes</button>
+        <button id="delete-all-paths" onclick="clear_paths_from_map()">Delete all paths</button>
         <form onsubmit="generate_trajectories(event)"  method="post" id="path-planning-settings">
           <label for="n-uavs">Number of uavs: </label> <input type="number" min="0" step="1" placeholder="Number of drones" id="n-uavs" name="n-uavs"  required>
           <label for="altitude">Drones altitude [m]: </label> <input type="number" min="1" step="1" placeholder="altitude" id="altitude" name="altitude"  required>
