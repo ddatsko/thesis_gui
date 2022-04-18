@@ -44,6 +44,17 @@
         margin-left: 0;
       }
 
+      .color-marker {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border: 0;
+      }
+
+      ul {
+        list-style: none;
+      }
+
       #delete-button {
         margin-top: 5px;
       }
@@ -311,6 +322,16 @@
           add_one_path(paths[i], colors[i]);
         }
       }
+      var cons;
+      function update_energy_consumptions(consumptions) {
+        cons = consumptions;
+        let colors = get_distinguishable_colors(consumptions.length);
+        let list = document.getElementById("power-consumptions");
+        list.innerHTML = "";
+        for (let i = 0; i < consumptions.length; ++i) {
+          list.innerHTML += `<li> <div class="color-marker" style="background-color: ${colors[i]}"></div> ${consumptions[i].toFixed(2)}</li>`
+        }
+      }
 
 
       function generate_trajectories(e) {
@@ -389,7 +410,6 @@
           body: JSON.stringify(value),
         });
         fetch(req).then(response => {
-          console.log(response);
           if (response.status != 200) {
             response.text().then(text => {alert(text)});
             throw new Error();
@@ -397,13 +417,16 @@
             return response.json();
           }
         }).then(data => {
+          console.log(data);
           if (data.success != true) {
             alert(`Error while generating paths: ${data.message}`);
             return;
           }
-          draw_paths_on_map(data.res);
+          draw_paths_on_map(data.path);
+          update_energy_consumptions(data.energy);
+
         }).catch(er => {})
-        return false;
+        return;
       }
 
 
@@ -416,6 +439,14 @@
         <button id="delete-button">Delete Selected Shape</button>
         <button id="delete-all-button">Delete all shapes</button>
         <button id="delete-all-paths" onclick="clear_paths_from_map()">Delete all paths</button>
+        <div>
+          <h4>
+            Paths energy consumptions:
+            <ul id="power-consumptions">
+
+            </ul>
+          </h4>
+        </div>
         <form onsubmit="generate_trajectories(event)"  method="post" id="path-planning-settings">
           <label for="n-uavs">Number of uavs: </label> <input type="number" min="0" step="1" placeholder="Number of drones" id="n-uavs" name="n-uavs"  required>
           <label for="altitude">Drones altitude [m]: </label> <input type="number" min="1" step="1" placeholder="altitude" id="altitude" name="altitude"  required>
@@ -437,10 +468,10 @@
             <legend>Drone specification</legend>
             <label for="override-drone-spec">Override drone specification? </label> <input type="checkbox" id="override-drone-spec" name="override-drone-spec">
             <hr>
-            <label for="uav-area">Area of drone projection [m^2]: </label> <input type="number" min="0" placeholder="Drone area" id="uav-area" name="uav-area">
-            <label for="propeller-radius"> Propeller radius [m]: </label><input type="number" min="0" placeholder="Propeller radius" id="propeller-radius" name="propeller-radius">
+            <label for="uav-area">Area of drone projection [m^2]: </label> <input type="number" min="0" step="any" placeholder="Drone area" id="uav-area" name="uav-area">
+            <label for="propeller-radius"> Propeller radius [m]: </label><input type="number" min="0" step="any" placeholder="Propeller radius" id="propeller-radius" name="propeller-radius">
             <label for="n-propellers"> Number of propellers: </label><input type="number" min="1" step="1" placeholder="N of propellers" id="n-propellers" name="n-propellers">
-            <label for="uav-mass">UAV mass: [kg]: </label> <input type="number" min="0.01" step="0.01" placeholder="Weight" id="uav-mass" name="uav-mass">
+            <label for="uav-mass">UAV mass: [kg]: </label> <input type="number" min="0.01" step="any" placeholder="Weight" id="uav-mass" name="uav-mass">
           </fieldset>
 
           <fieldset>

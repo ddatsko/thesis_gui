@@ -14,7 +14,9 @@ def generate_drones_paths(generate_req) -> GeneratePathsResponse or None:
     if not res.success:
         return json.dumps({"success": False, "res": res.message})
     else:
-        return json.dumps({"success": True, "res": [[(p.position.y, p.position.x) for p in path.list] for path in res.paths_gps]})
+        return json.dumps({"success": True,
+                            "path": [[(p.position.y, p.position.x) for p in path.list] for path in res.paths_gps],
+                            "energy": res.energy_consumptions})
 
 
 
@@ -55,7 +57,6 @@ def generate_trajectories():
             generate_req.battery_number_of_cells = int(json_data["cells-in-series"] or 0)
 
         res = generate_drones_paths(generate_req)
-        print(res)
         return res, 200
     except Exception as e:
         return f"Error: {e}", 500
