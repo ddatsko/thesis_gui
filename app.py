@@ -1,9 +1,13 @@
 from flask import Flask, render_template, request
 import json
 import rospy
+import rosservice
 from thesis_trajectory_generator.srv import GeneratePaths, GeneratePathsRequest, GeneratePathsResponse
+from mrs_msgs.srv import PathSrv, PathSrvRequest, PathSrvResponse
 from geometry_msgs.msg import Point32
 from geometry_msgs.msg import Polygon
+
+last_generated_paths = []
 
 
 def generate_drones_paths(generate_req) -> GeneratePathsResponse or None:
@@ -14,14 +18,31 @@ def generate_drones_paths(generate_req) -> GeneratePathsResponse or None:
     if not res.success:
         return json.dumps({"success": False, "res": res.message})
     else:
+        global last_generated_paths
+        last_generated_paths = res.paths_gps
         return json.dumps({"success": True,
-                            "path": [[(p.position.y, p.position.x) for p in path.list] for path in res.paths_gps],
+                            "path": [[(p.position.y, p.position.x) for p in path.points] for path in res.paths_gps],
                             "energy": res.energy_consumptions})
+
+
+def send_path_to_service(path, service):
+    print(last_generated_paths)
+    service_list = rosservice.get_service_list()
+    if service not in service_list:
+        return False, "Service not in service list"
+    follow_path = rospy.ServiceProxy(service, PathSrv)
+    path_srv = PathSrvRequest(path)
+    res = follow_path(path_srv)
+    if not res.success:
+        return False, res.message
+    else:
+        return True, res.message
 
 
 
 
 app = Flask(__name__)
+
 
 @app.route('/')
 def hello_world():
@@ -41,7 +62,8 @@ def generate_trajectories():
         generate_req.number_of_drones = int(json_data["n-uavs"])
         generate_req.rotations_per_cell = int(json_data["rotations-per-cell"])
         generate_req.decomposition_rotation = float(json_data["init-rotation"])
-
+        generate_req.max_polygon_area = float(json_data["max-piece-area"] or 0)
+        generate_req.drones_altitude = int(json_data["altitude"])
 
         # TODO: check this. Maybe, give the choice to user
         generate_req.no_improvement_cycles_before_stop = 100
@@ -62,7 +84,30 @@ def generate_trajectories():
         return f"Error: {e}", 500
 
 
+@app.route('/load_paths', methods=['POST'])
+def load_paths():
+    json_data = json.loads(request.data.decode('utf-8'))
+    paths_to_load = json_data["uav_topic"]
+    services_used = set()
+    print("LAST GENERATED: ", last_generated_paths)
+    for path_ind, service in paths_to_load:
+        if not service or service in services_used:
+            continue
+        services_used.add(service)
+        send_path_to_service(last_generated_paths[path_ind], service)
+
+
+
+
+@app.route('/get_services')
+def get_services():
+    valid_services = tuple(map(lambda x: x[0],
+                          filter(lambda x: x[1] == "mrs_msgs/PathSrv",
+                          map(lambda x: (x, rosservice.get_service_type(x)), rosservice.get_service_list()))))
+    return json.dumps({"valid_services": valid_services}), 200
+
+
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host="10.0.1.235")

@@ -70,6 +70,7 @@
       var selectedColor;
       var colorButtons = {};
       var map;
+      var uavs_num = 0;
 
       function clearSelection() {
         if (selectedShape) {
@@ -235,9 +236,6 @@
         update_rotation_value();
       }
       google.maps.event.addDomListener(window, 'load', initialize);
-
-
-
       // Own initialization
 
       function get_rotation(x1, y1, x2, y2, angle) {
@@ -303,7 +301,7 @@
       }
 
       function add_one_path(path, color) {
-        let path_tr = path.map(point => {return {lat: point[0], lng: point[1]}});
+        let path_tr = path.map(point => {return {lat: point[1], lng: point[0]}});
         console.log(path_tr);
         let coorindates = new google.maps.Polyline({
           path: path_tr,
@@ -332,7 +330,6 @@
           list.innerHTML += `<li> <div class="color-marker" style="background-color: ${colors[i]}"></div> ${consumptions[i].toFixed(2)}</li>`
         }
       }
-
 
       function generate_trajectories(e) {
         e.preventDefault();
@@ -422,13 +419,71 @@
             alert(`Error while generating paths: ${data.message}`);
             return;
           }
+          uavs_num = data.path.length;
           draw_paths_on_map(data.path);
           update_energy_consumptions(data.energy);
 
-        }).catch(er => {})
+        }).catch(er => {alert(er)})
         return;
       }
 
+      function update_falling_list_values(values) {
+        let targets_selection = document.getElementById("target-selection");
+        let targets_list = document.getElementById("targets-list");
+
+        let options = "";
+        values.forEach(value => {
+          options += `<option value=${value}>${value}</option>`;
+        })
+
+        let colors = get_distinguishable_colors(uavs_num);
+        targets_list.innerHTML = "";
+        for (let i = 0; i < uavs_num; ++i) {
+          targets_list.innerHTML += `<div><div class="color-marker" style="background-color: ${colors[i]}"></div> <select id="path-${i}-target">${options}</select></div>`;
+        }
+
+      }
+
+      function get_available_services() {
+        let req = new Request('/get_services', {
+          method: 'GET'
+        });
+        fetch(req).then(response => {
+          if (response.status != 200) {
+            alert("Error while receiving valid services");
+            throw new Error();
+          } else {
+            return response.json();
+          }
+        }).then(data => {
+          console.log(data);
+          update_falling_list_values(data.valid_services.concat([""]));
+        }).catch(er => {alert("Error while transforming valid services data")});
+      }
+
+      function start_following_paths() {
+        let request = [];
+        for (let i = 0; i < uavs_num; ++i) {
+          let selection = document.getElementById(`path-${i}-target`);
+          request.push([i, selection.value]);
+        }
+        let req = new Request('/load_paths', {
+          method: 'POST',
+          body: JSON.stringify({'uav_topic': request})
+        });
+        console.log("Sending " + req.body);
+
+        fetch(req).then(response => {
+          if (response.status != 200) {
+            alert("Error. Invalid response from server");
+            throw new Error();
+          }
+          return response.json();
+        }).then(data => {
+          console.log(data);
+
+        }).catch(er => {console.log(er);});
+      }
 
     </script>
   </head>
@@ -447,12 +502,22 @@
             </ul>
           </h4>
         </div>
+
+        <div id="target-selection">
+          <button onclick="get_available_services()">Update targets</button>
+          <ul style="list-style: none" id="targets-list">
+
+          </ul>
+          <button onclick="start_following_paths()">Load paths to UAVs</button>
+        </div>
+
         <form onsubmit="generate_trajectories(event)"  method="post" id="path-planning-settings">
           <label for="n-uavs">Number of uavs: </label> <input type="number" min="0" step="1" placeholder="Number of drones" id="n-uavs" name="n-uavs"  required>
           <label for="altitude">Drones altitude [m]: </label> <input type="number" min="1" step="1" placeholder="altitude" id="altitude" name="altitude"  required>
           <label for="rotations-per-cell">Sweeping rotations in each cell: </label> <input type="number" min="1" step="1" placeholder="Rotations" id="rotations-per-cell" name="rotations-per-cell" required>
 
           <label for="sweeping-step">Sweeping step [m]: </label> <input type="number" min="1" step="0.1" placeholder="altitude" id="sweeping-step" name="sweeping-step"  required>
+          <label for="max-piece-area">Max decomposed polygon area: </label> <input type="number" min="1" step="any" placeholder="Area" name="max-piece-area" id="max-piece-area">
           <label for="init-rotation">Initial rotation [rad]: <span id="rotation-value"></span> </label><input type="range" min="0" max="3.14"
                                                                                                         step="0.01" name="init-rotation"
                                                                                                         value="0"
