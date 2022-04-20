@@ -387,8 +387,10 @@
         value["start-point"] = init_point;
         console.log(value);
 
+        console.log("Values: ");
+        console.log(Object.values(value));
 
-        if (Object.values(value).indexOf("override-drone-spec") > -1) {
+        if (Object.keys(value).indexOf("override-drone-spec") > -1) {
           value["override-drone-spec"] = true;
         } else {
           value["override-drone-spec"] = false;
@@ -537,6 +539,7 @@
             <label for="propeller-radius"> Propeller radius [m]: </label><input type="number" min="0" step="any" placeholder="Propeller radius" id="propeller-radius" name="propeller-radius">
             <label for="n-propellers"> Number of propellers: </label><input type="number" min="1" step="1" placeholder="N of propellers" id="n-propellers" name="n-propellers">
             <label for="uav-mass">UAV mass: [kg]: </label> <input type="number" min="0.01" step="any" placeholder="Weight" id="uav-mass" name="uav-mass">
+            <label for="acceleration">Acceleration [m/s^2??]</label><input type="number" name="acceleration" id="acceleration">
           </fieldset>
 
           <fieldset>

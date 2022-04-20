@@ -73,6 +73,7 @@ def generate_trajectories():
             generate_req.propeller_radius = float(json_data["propeller-radius"] or 0)
             generate_req.number_of_propellers = int(json_data["n-propellers"] or 0)
             generate_req.drone_mass = float(json_data["uav-mass"] or 0)
+            generate_req.average_acceleration = float(json_data["acceleration"])
         generate_req.override_battery_model = bool(json_data["override-battery-model"])
         if generate_req.override_battery_model:
             generate_req.battery_cell_capacity = float(json_data["cell-capacity"] or 0)
@@ -101,9 +102,12 @@ def load_paths():
 
 @app.route('/get_services')
 def get_services():
-    valid_services = tuple(map(lambda x: x[0],
-                          filter(lambda x: x[1] == "mrs_msgs/PathSrv",
-                          map(lambda x: (x, rosservice.get_service_type(x)), rosservice.get_service_list()))))
+    try:
+        valid_services = tuple(map(lambda x: x[0],
+                              filter(lambda x: x[1] == "mrs_msgs/PathSrv",
+                              map(lambda x: (x, rosservice.get_service_type(x)) if 'logger' not in x else ("", ""), rosservice.get_service_list()))))
+    except Exception as e:
+        return json.dumps({'valid_services': []}), 200
     return json.dumps({"valid_services": valid_services}), 200
 
 
