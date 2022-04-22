@@ -26,7 +26,6 @@ def generate_drones_paths(generate_req) -> GeneratePathsResponse or None:
 
 
 def send_path_to_service(path, service):
-    print(last_generated_paths)
     service_list = rosservice.get_service_list()
     if service not in service_list:
         return False, "Service not in service list"
@@ -64,6 +63,8 @@ def generate_trajectories():
         generate_req.decomposition_rotation = float(json_data["init-rotation"])
         generate_req.max_polygon_area = float(json_data["max-piece-area"] or 0)
         generate_req.drones_altitude = int(json_data["altitude"])
+        generate_req.distance_for_turning = float(json_data["distance-for-rotation"])
+        generate_req.max_number_of_extra_points = int(json_data["max-extra-points"])
 
         # TODO: check this. Maybe, give the choice to user
         generate_req.no_improvement_cycles_before_stop = 100
@@ -89,8 +90,8 @@ def generate_trajectories():
 def load_paths():
     json_data = json.loads(request.data.decode('utf-8'))
     paths_to_load = json_data["uav_topic"]
+    print("PATHS TO LOAD", paths_to_load)
     services_used = set()
-    print("LAST GENERATED: ", last_generated_paths)
     for path_ind, service in paths_to_load:
         if not service or service in services_used:
             continue
@@ -114,4 +115,4 @@ def get_services():
 
 
 if __name__ == '__main__':
-    app.run(host="10.0.1.235")
+    app.run(host="127.0.0.1", port=5000)

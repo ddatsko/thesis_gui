@@ -519,6 +519,9 @@
           <label for="rotations-per-cell">Sweeping rotations in each cell: </label> <input type="number" min="1" step="1" placeholder="Rotations" id="rotations-per-cell" name="rotations-per-cell" required>
 
           <label for="sweeping-step">Sweeping step [m]: </label> <input type="number" min="1" step="0.1" placeholder="altitude" id="sweeping-step" name="sweeping-step"  required>
+          <label for="distance-for-rotation">Distance for rotation [m]: </label><input type="number" min="0.1" step="0.1" name="distance-for-rotation" id="distance-for-rotation" required>
+          <label for="max-extra-points">Maximum number of extra points in each segment: </label><input type="number" min="0" step="1" name="max-extra-points" id="max-extra-points" required>
+
           <label for="max-piece-area">Max decomposed polygon area: </label> <input type="number" min="1" step="any" placeholder="Area" name="max-piece-area" id="max-piece-area">
           <label for="init-rotation">Initial rotation [rad]: <span id="rotation-value"></span> </label><input type="range" min="0" max="3.14"
                                                                                                         step="0.01" name="init-rotation"
