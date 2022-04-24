@@ -2,7 +2,7 @@ from flask import Flask, render_template, request
 import json
 import rospy
 import rosservice
-from thesis_trajectory_generator.srv import GeneratePaths, GeneratePathsRequest, GeneratePathsResponse
+from thesis_path_generator.srv import GeneratePaths, GeneratePathsRequest, GeneratePathsResponse
 from mrs_msgs.srv import PathSrv, PathSrvRequest, PathSrvResponse
 from geometry_msgs.msg import Point32
 from geometry_msgs.msg import Polygon
@@ -29,15 +29,16 @@ def send_path_to_service(path, service):
     service_list = rosservice.get_service_list()
     if service not in service_list:
         return False, "Service not in service list"
-    follow_path = rospy.ServiceProxy(service, PathSrv)
-    path_srv = PathSrvRequest(path)
-    res = follow_path(path_srv)
-    if not res.success:
-        return False, res.message
-    else:
-        return True, res.message
-
-
+    try:
+        follow_path = rospy.ServiceProxy(service, PathSrv)
+        path_srv = PathSrvRequest(path)
+        res = follow_path(path_srv)
+        if not res.success:
+            return False, res.message
+        else:
+            return True, res.message
+    except Exception as e:
+        return False, "Error while calling service: " + str(e)
 
 
 app = Flask(__name__)
@@ -92,11 +93,15 @@ def load_paths():
     paths_to_load = json_data["uav_topic"]
     print("PATHS TO LOAD", paths_to_load)
     services_used = set()
+    res = []
     for path_ind, service in paths_to_load:
         if not service or service in services_used:
+            res.append([len(res), "ERROR", "Empty service name"])
             continue
         services_used.add(service)
-        send_path_to_service(last_generated_paths[path_ind], service)
+        success, msg = send_path_to_service(last_generated_paths[path_ind], service)
+        res.append([len(res), "SUCCESS" if success else "ERROR", "Message: " + msg])
+    return json.dumps(res), 200
 
 
 

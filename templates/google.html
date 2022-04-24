@@ -483,6 +483,7 @@
           return response.json();
         }).then(data => {
           console.log(data);
+          alert(data.map(el => String(el)).join("\n"));
 
         }).catch(er => {console.log(er);});
       }

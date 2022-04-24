@@ -1,0 +1,21 @@
+name: simulation
+root: ./
+startup_window: gui_app
+windows:
+  - roscore:
+      layout: tiled
+      panes:
+        - roscore
+  - path_generation:
+      layout: tiled
+      panes:
+        - waitForRos; roslaunch thesis_path_generator thesis_path_generator.launch
+  - gui_app:
+      layout: tiled
+      panes:
+        - python ../../app.py 
+
+  - layout:
+      layout: tiled
+      panes:
+        - ~/.i3/layout_manager.sh ./layout.json
