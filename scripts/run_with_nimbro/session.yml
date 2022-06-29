@@ -9,12 +9,15 @@ windows:
   - path_generation:
       layout: tiled
       panes:
-        - waitForRos; roslaunch thesis_path_generator thesis_path_generator.launch
+        - waitForRos; sleep 3; roslaunch thesis_path_generator thesis_path_generator.launch
   - gui_app:
       layout: tiled
       panes:
         - python ../../app.py 
-
+  - nimbro:
+      layout: tiled
+      panes:
+        - waitForRos; sleep 3; rosrun mrs_uav_general run_nimbro.py custom_configs/nimbro.yaml custom_configs/uav_names.yaml
   - layout:
       layout: tiled
       panes:
