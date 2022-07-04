@@ -338,49 +338,80 @@
             }
         }
 
-        function generate_trajectories(e) {
-            e.preventDefault();
-
-            clear_paths_from_map();
-            let init_point;
-            let fly_zone;
-            let no_fly_zones = [];
-
-            let fly_zone_found = false;
+        function get_start_point() {
             let markers_found = 0;
-
+            let init_point;
             for (let i = 0; i < all_overlays.length; ++i) {
                 let overlay = all_overlays[i].overlay;
                 console.log(overlay);
                 if (overlay.type == google.maps.drawing.OverlayType.MARKER) {
                     if (markers_found != 0) {
                         alert("There may be only one marker identifying the starting point...");
-                        return;
+                        return undefined;
                     }
                     markers_found++;
                     init_point = [overlay.position.lat(), overlay.position.lng()];
-                } else if (overlay.type == google.maps.drawing.OverlayType.POLYGON) {
+                }
+            }
+            if (!markers_found) {
+                return undefined;
+            }
+            return init_point;
+        }
+
+        function get_fly_zone() {
+            let fly_zone;
+            let fly_zone_found = false;
+
+            for (let i = 0; i < all_overlays.length; ++i) {
+                let overlay = all_overlays[i].overlay;
+                console.log(overlay);
+                if (overlay.type == google.maps.drawing.OverlayType.POLYGON) {
                     if (overlay.fillColor == FLY_ZONE_COLOR) {
                         if (fly_zone_found) {
                             alert("There may not be more than 1 fly zone");
-                            return;
+                            return undefined;
                         }
                         fly_zone_found = true;
                         fly_zone = get_polygon_points(overlay);
-                    } else {
+                    }
+                }
+            }
+            return fly_zone;
+        }
+
+        function get_no_fly_zones() {
+            let no_fly_zones = [];
+            for (let i = 0; i < all_overlays.length; ++i) {
+                let overlay = all_overlays[i].overlay;
+                if (overlay.type == google.maps.drawing.OverlayType.POLYGON) {
+                    if (overlay.fillColor != FLY_ZONE_COLOR) {
                         no_fly_zones.push(get_polygon_points(overlay));
                     }
                 }
             }
+            return no_fly_zones;
+        }
 
-            if (!fly_zone_found) {
+        function generate_trajectories(e) {
+            e.preventDefault();
+
+            clear_paths_from_map();
+            let init_point = get_start_point();
+            let no_fly_zones = get_no_fly_zones();
+            let fly_zone = get_fly_zone();
+
+            if (fly_zone === undefined) {
                 alert("There should be at least one fly zone");
                 return;
             }
-            if (markers_found == 0) {
-                alert("No markers found. Set one as a starting position of the drone");
+
+            if (init_point === undefined) {
+                alert("UAVs initial position is not placed on the map");
                 return;
             }
+
+
             fly_zone.push(fly_zone[0]);
             for (let i = 0; i < no_fly_zones.length; ++i) {
                 no_fly_zones[i].push(no_fly_zones[i][0]);
@@ -437,6 +468,41 @@
                 alert(er)
             })
             return;
+        }
+
+        function save_results(e) {
+            e.preventDefault();
+
+            let form_data = new FormData(e.target);
+            let value = Object.fromEntries(form_data.entries());
+            console.log(value);
+
+            let fly_zone = get_fly_zone();
+            let no_fly_zones = get_no_fly_zones();
+            let start_point = get_start_point();
+
+            value["fly-zone"] = fly_zone;
+            value["no-fly-zones"] = no_fly_zones;
+            value["start-point"] = start_point;
+            value["paths"] = [];
+            for (let path of all_paths) {
+                value["paths"].push(get_polygon_points(path));
+            }
+
+            let req = new Request("/save_results", {
+                method: 'POST',
+                body: JSON.stringify(value),
+            });
+            fetch(req).then(response => {
+                if (response.status != 200) {
+                    response.text().then(text => {
+                        alert(text)
+                    });
+                    throw new Error();
+                } else {
+                    alert("Successfully saved the data");
+                }
+            });
         }
 
         function update_falling_list_values(values) {
@@ -534,6 +600,7 @@
                 <option value="own" default>Own</option>
                 <option value="gtsp">GTSP</option>
                 <option value="popcorn">POPCORN</option>
+                <option value="all">All</option>
             </select>
             <br>
             <label for="n-uavs">Number of uavs: </label> <input type="number" min="0" step="1"
@@ -591,7 +658,7 @@
                                                                       placeholder="Weight" id="uav-mass"
                                                                       name="uav-mass">
                 <label for="acceleration">Acceleration [m/s^2]</label><input type="number" name="acceleration"
-                                                                             id="acceleration">
+                                                                             id="acceleration" step="any">
             </fieldset>
 
             <fieldset>
@@ -610,6 +677,14 @@
             <br>
             <br>
             <button type="submit">Generate trajectories</button>
+        </form>
+
+        <form onsubmit="save_results(event)" id="save-data-settings">
+            <label for="save-polygon">Save polygon? </label>  <input type="checkbox" name="save-polygon" id="save-polygon"><br>
+            <label for="save-path">Save paths? </label>  <input type="checkbox" name="save-path" id="save-path"><br>
+            <label for="new-folder">Save path in a new folder? </label> <input type="checkbox" name="new-folder" id="new-folder"><br>
+            <label for="folder-name">In which folder save the data? </label><input type="text" name="folder-name" id="folder-name" placeholder="Folder name" required>
+            <button type="submit">Save results</button>
         </form>
     </div>
 </div>

@@ -15,7 +15,7 @@ def _generate_drones_paths_ros(generate_req):
 
 
 def plan_paths_own(json_data):
-    print(json_data)
+    print("OWN PLANNER")
     generate_req = GeneratePathsRequest()
     generate_req.fly_zone.points = [Point32(float(x), float(y), 0.0) for x, y in json_data["fly-zone"]]
     generate_req.no_fly_zones = [Polygon([Point32(float(x), float(y), 0.0) for x, y in pol]) for pol in
