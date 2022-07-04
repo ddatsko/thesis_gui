@@ -319,6 +319,20 @@
             all_paths.push(coorindates);
         }
 
+        function make_one_polygon(path, color) {
+            let path_tr = path.map(point => {
+                return {lat: point[0], lng: point[1]}
+            });
+            let polygon = new google.maps.Polygon({
+                path: path_tr,
+                editable: true,
+                fillColor: color,
+                fillOpacity: 0.2,
+            });
+            polygon.setMap(map);
+            return polygon;
+        }
+
         function draw_paths_on_map(paths) {
             let colors = get_distinguishable_colors(paths.length);
             for (let i = 0; i < paths.length; ++i) {
@@ -505,6 +519,40 @@
             });
         }
 
+        function load_data(e) {
+            e.preventDefault();
+            let form_data = new FormData(e.target);
+            let value = Object.fromEntries(form_data.entries());
+
+
+            let req = new Request('/load_polygon', {
+                method: 'POST',
+                body: JSON.stringify(value)
+            })
+            fetch(req).then(response => {
+                if (response.status != 200) {
+                    response.text().then(text => {
+                        alert(text)
+                    });
+                    throw new Error();
+                } else {
+                    return response.json();
+                }
+            }).then(data => {
+                deleteAllShape();
+                clear_paths_from_map();
+
+                let fly_zone_pol = make_one_polygon(data['fly-zone'], '32CD32');
+                all_overlays.push(Object({type: 'polygon', overlay: fly_zone_pol}));
+                for (let no_fly_zone of data['no-fly-zones']) {
+                    let pol = make_one_polygon(no_fly_zone, 'FF1433');
+                    all_overlays.push(pol);
+                }
+                console.log(data);
+            })
+
+        }
+
         function update_falling_list_values(values) {
             let targets_selection = document.getElementById("target-selection");
             let targets_list = document.getElementById("targets-list");
@@ -685,6 +733,10 @@
             <label for="new-folder">Save path in a new folder? </label> <input type="checkbox" name="new-folder" id="new-folder"><br>
             <label for="folder-name">In which folder save the data? </label><input type="text" name="folder-name" id="folder-name" placeholder="Folder name" required>
             <button type="submit">Save results</button>
+        </form>
+        <form onsubmit="load_data(event)" id="data-load-form">
+            <label for="directory">Directory path: </label><input type="text" id="directory" name="directory" placeholder="/path/to/dir">
+            <button type="submit">Load polygons</button>
         </form>
     </div>
 </div>

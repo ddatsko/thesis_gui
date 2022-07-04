@@ -6,7 +6,7 @@ from gstp_planner import plan_path_gtsp
 from popcorn_planner import plan_paths_wadl
 from utils import *
 from perofrmance_comparison import compare_algorithm
-from data_storage import save_polygon, save_paths
+from data_storage import save_polygon, save_paths, load_paths_from_dir
 
 last_generated_paths = []
 
@@ -32,6 +32,16 @@ def save_results():
     except Exception as e:
         return str(e), 500
     return "", 200
+
+
+@app.route('/load_polygon', methods=['POST'])
+def load_polygon():
+    try:
+        json_data = json.loads(request.data.decode('utf-8'))
+        return json.dumps(load_paths_from_dir(json_data['directory'])), 200
+    except Exception as e:
+        print(e)
+        return str(e), 500
 
 
 @app.route('/generate_trajectories', methods=['POST'])

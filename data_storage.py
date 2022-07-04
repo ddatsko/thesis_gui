@@ -14,6 +14,11 @@ def save_points_to_file(polygon, filename):
             print(f'{point[0]}, {point[1]}', file=f)
 
 
+def read_points_from_file(filename: str):
+    with open(filename, 'r') as f:
+        return list(map(lambda line: tuple(map(float, line.split(','))), filter(lambda x: x, f.readlines())))
+
+
 def save_polygon(fly_zone, no_fly_zones, start_point, directory):
     # Make an empty directory <project_name>/polygon or remove all the old files from there
     if not os.path.exists(directory):
@@ -49,6 +54,26 @@ def save_paths(paths, directory, create_new_dir=True):
     for i in range(len(paths)):
         save_points_to_file(paths[i], f"{path_dir}/path_{i}.csv")
         i += 1
+
+
+def load_paths_from_dir(directory: str):
+    directory = directory.rstrip('/') + '/'
+    if not os.path.exists(directory):
+        return "Invalid directory path", 500
+    files = os.listdir(directory)
+    if FLY_ZONE_FILENAME not in files:
+        return "No fly zone file found in the directory", 500
+    if START_POINT_FILENAME not in files:
+        return "No start point found in the directory", 500
+    fly_zone = read_points_from_file(directory + FLY_ZONE_FILENAME)
+    start_point = read_points_from_file(directory + START_POINT_FILENAME)[0]
+
+    no_fly_zones = []
+    i = 0
+    while os.path.exists(filename := (directory + NO_FLY_ZONES_FILENAME_TEMPLATE.format(i))):
+        no_fly_zones.append(read_points_from_file(filename))
+
+    return {'fly-zone': fly_zone, 'no-fly-zones': no_fly_zones, 'start-point': start_point}
 
 
 
