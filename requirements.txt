@@ -1,0 +1,5 @@
+Flask~=2.1.2
+rosservice~=1.15.13
+rospy~=1.15.13
+wadl-planner
+six

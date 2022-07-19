@@ -41,15 +41,18 @@ def plan_path_gtsp(json_data):
     polygon_req.polygon.polygon.hull.points = fly_zone[:-1]
     polygon_req.polygon.polygon.holes = no_fly_zones
 
+    print("Planning...")
     # load points to the planning node
     _load_gtsp_polygon(polygon_req)
+    print("Points loaded")
 
     planner_req = PlannerServiceRequest()
     planner_req.start_pose.pose.position = meter_point_from_gps(float(json_data["start-point"][0]),
                                                                 float(json_data["start-point"][1]), origin_x, origin_y)
     planner_req.goal_pose = planner_req.start_pose
 
+    print("Starting planner")
     planned_path = _start_gtsp_planner(planner_req)
 
     return [[gps_point_from_meters(p.transforms[0].translation.x, p.transforms[0].translation.y, origin_x, origin_y)
-                for p in planned_path.points]]
+             for p in planned_path.points]]

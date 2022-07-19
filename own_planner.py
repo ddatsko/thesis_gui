@@ -2,13 +2,23 @@ from thesis_path_generator.srv import GeneratePaths, GeneratePathsRequest, Gener
 from geometry_msgs.msg import Point32, Polygon
 import rospy
 
+last_generated_paths = None
+
+UNIQUE_ALTITUDE_STEP = 2
+
 
 def _generate_drones_paths_ros(generate_req):
     rospy.wait_for_service("/generate_paths")
 
     proxy = rospy.ServiceProxy("/generate_paths", GeneratePaths)
     res = proxy(generate_req)
+
+    global last_generated_paths
+    last_generated_paths = res.paths_gps
+    print(last_generated_paths)
+
     if not res.success:
+        print("Unsuccessful service call")
         return []
     else:
         return [[(p.position.y, p.position.x) for p in path.points] for path in res.paths_gps]
@@ -30,6 +40,7 @@ def plan_paths_own(json_data):
     generate_req.drones_altitude = int(json_data["altitude"])
     generate_req.distance_for_turning = float(json_data["distance-for-rotation"])
     generate_req.max_number_of_extra_points = int(json_data["max-extra-points"])
+    generate_req.unique_altitude_step = UNIQUE_ALTITUDE_STEP
 
     # TODO: check this. Maybe, give the choice to user
     generate_req.no_improvement_cycles_before_stop = 100
@@ -44,5 +55,8 @@ def plan_paths_own(json_data):
     if generate_req.override_battery_model:
         generate_req.battery_cell_capacity = float(json_data["cell-capacity"] or 0)
         generate_req.battery_number_of_cells = int(json_data["cells-in-series"] or 0)
-
     return _generate_drones_paths_ros(generate_req)
+
+
+def get_last_own_paths():
+    return last_generated_paths

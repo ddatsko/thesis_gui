@@ -48,7 +48,11 @@ def plan_paths_wadl(json_data):
     # Delete all the existing planned paths
     for p in filter(lambda x: x.startswith(CSV_FILENAME[:-4]), os.listdir(SURVEY_NAME)):
         shutil.rmtree(SURVEY_NAME + '/' + p)
-    survey.plan()
+    try:
+        survey.plan()
+    except Exception as e:
+        pass
+
 
     os.sync()
     routes_path = SURVEY_NAME + '/' + list(filter(lambda x: x.startswith(CSV_FILENAME[:-4]), os.listdir(SURVEY_NAME)))[0] + '/routes/'

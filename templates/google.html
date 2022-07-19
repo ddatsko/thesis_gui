@@ -328,9 +328,21 @@
                 editable: true,
                 fillColor: color,
                 fillOpacity: 0.2,
+                type: 'polygon'
             });
             polygon.setMap(map);
             return polygon;
+        }
+
+        function make_marker(marker_pos) {
+            let marker = new google.maps.Marker({
+                // position: {lat: () => {return marker_pos[0]}, lng: () => {return marker_pos[1]}},
+                position: {lat: marker_pos[0], lng: marker_pos[1]},
+                draggable: true,
+                type: google.maps.drawing.OverlayType.MARKER
+            });
+            marker.setMap(map);
+            return marker;
         }
 
         function draw_paths_on_map(paths) {
@@ -380,8 +392,8 @@
             for (let i = 0; i < all_overlays.length; ++i) {
                 let overlay = all_overlays[i].overlay;
                 console.log(overlay);
-                if (overlay.type == google.maps.drawing.OverlayType.POLYGON) {
-                    if (overlay.fillColor == FLY_ZONE_COLOR) {
+                if (overlay.type === google.maps.drawing.OverlayType.POLYGON) {
+                    if (overlay.fillColor === FLY_ZONE_COLOR) {
                         if (fly_zone_found) {
                             alert("There may not be more than 1 fly zone");
                             return undefined;
@@ -398,8 +410,8 @@
             let no_fly_zones = [];
             for (let i = 0; i < all_overlays.length; ++i) {
                 let overlay = all_overlays[i].overlay;
-                if (overlay.type == google.maps.drawing.OverlayType.POLYGON) {
-                    if (overlay.fillColor != FLY_ZONE_COLOR) {
+                if (overlay.type === google.maps.drawing.OverlayType.POLYGON) {
+                    if (overlay.fillColor !== FLY_ZONE_COLOR) {
                         no_fly_zones.push(get_polygon_points(overlay));
                     }
                 }
@@ -524,7 +536,7 @@
             let form_data = new FormData(e.target);
             let value = Object.fromEntries(form_data.entries());
 
-
+            console.log("loading data");
             let req = new Request('/load_polygon', {
                 method: 'POST',
                 body: JSON.stringify(value)
@@ -542,10 +554,13 @@
                 deleteAllShape();
                 clear_paths_from_map();
 
-                let fly_zone_pol = make_one_polygon(data['fly-zone'], '32CD32');
+                let start_point_marker = make_marker(data['start-point']);
+                all_overlays.push(Object({type: google.maps.drawing.OverlayType.MARKER, overlay: start_point_marker}));
+
+                let fly_zone_pol = make_one_polygon(data['fly-zone'], FLY_ZONE_COLOR);
                 all_overlays.push(Object({type: 'polygon', overlay: fly_zone_pol}));
                 for (let no_fly_zone of data['no-fly-zones']) {
-                    let pol = make_one_polygon(no_fly_zone, 'FF1433');
+                    let pol = Object({type: 'polygon', overlay: make_one_polygon(no_fly_zone, NO_FLY_ZONE_COLOR)});
                     all_overlays.push(pol);
                 }
                 console.log(data);
@@ -730,8 +745,8 @@
         <form onsubmit="save_results(event)" id="save-data-settings">
             <label for="save-polygon">Save polygon? </label>  <input type="checkbox" name="save-polygon" id="save-polygon"><br>
             <label for="save-path">Save paths? </label>  <input type="checkbox" name="save-path" id="save-path"><br>
-            <label for="new-folder">Save path in a new folder? </label> <input type="checkbox" name="new-folder" id="new-folder"><br>
-            <label for="folder-name">In which folder save the data? </label><input type="text" name="folder-name" id="folder-name" placeholder="Folder name" required>
+            <label for="path-folder">Save path to directory: </label> <input type="text" name="path-folder" id="path-folder">
+            <label for="folder-name">Experiment name: </label><input type="text" name="folder-name" id="folder-name" placeholder="Folder name" required>
             <button type="submit">Save results</button>
         </form>
         <form onsubmit="load_data(event)" id="data-load-form">
