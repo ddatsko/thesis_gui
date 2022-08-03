@@ -1,19 +1,14 @@
 from flask import Flask, render_template, request
 import json
-from popcorn_planner import plan_paths_wadl
 from own_planner import plan_paths_own, get_last_own_paths
-from gstp_planner import plan_path_gtsp
+from gtsp_planner import plan_path_gtsp
 from popcorn_planner import plan_paths_wadl
 from utils import *
-from perofrmance_comparison import compare_algorithm
-from data_storage import save_polygon, save_paths, load_paths_from_dir
-import asyncio
+from data_storage import save_polygon, save_paths, load_polygons_from_dir, save_config, read_config
+from optimized_darp_planner import plan_optimized_darp_paths
 from threading import Thread
 
 app = Flask(__name__)
-
-loop = asyncio.new_event_loop()
-asyncio.set_event_loop(loop)
 
 
 @app.route('/')
@@ -27,7 +22,7 @@ def save_results():
         json_data = json.loads(request.data.decode('utf-8'))
         if 'save-polygon' in json_data:
             save_polygon(json_data['fly-zone'], json_data['no-fly-zones'], json_data['start-point'],
-                         json_data['folder-name'])
+                         'experiments/' + json_data['folder-name'])
         if 'save-path' in json_data:
             save_paths(json_data['paths'], json_data['folder-name'], json_data['path-folder'])
 
@@ -40,7 +35,7 @@ def save_results():
 def load_polygon():
     try:
         json_data = json.loads(request.data.decode('utf-8'))
-        return json.dumps(load_paths_from_dir(json_data['directory'])), 200
+        return json.dumps({**load_polygons_from_dir(json_data['directory']), **read_config(json_data['directory'])}), 200
     except Exception as e:
         print(e)
         return str(e), 500
@@ -48,8 +43,13 @@ def load_polygon():
 
 @app.route('/generate_trajectories', methods=['POST'])
 def generate_trajectories():
+    print(request.data.decode('utf-8'))
     try:
         json_data = json.loads(request.data.decode('utf-8'))
+        if 'main-save-config' in json_data.keys() and json_data['main-save-config'] and json_data['experiment-name']:
+            save_config(json_data['experiment-name'], json_data)
+            return "", 200
+
         paths = []
         algorithm = json_data['planning-algorithm']
         if algorithm == 'own':
@@ -58,9 +58,11 @@ def generate_trajectories():
             paths = plan_path_gtsp(json_data)
         elif algorithm == 'popcorn':
             paths = plan_paths_wadl(json_data)
+        elif algorithm == 'darp':
+            paths = plan_optimized_darp_paths(json_data)
         elif algorithm == 'all':
             experiment_directory = input("Enter the directory to save experiment to: ")
-            paths = compare_algorithm(json_data, write_data=True, experiment_dir=experiment_directory)
+            # paths = compare_algorithm(json_data, write_data=True, experiment_dir=experiment_directory)
 
         if not paths:
             return 'Error: No paths were generated', 500
@@ -135,7 +137,7 @@ def get_services():
                                    filter(lambda x: x[1] == "mrs_msgs/PathSrv",
                                           map(lambda x: (x, rosservice.get_service_type(x)) if 'logger' not in x else (
                                               "", ""), rosservice.get_service_list()))))
-    except Exception as e:
+    except Exception as _:
         return json.dumps({'valid_services': []}), 200
     return json.dumps({"valid_services": valid_services}), 200
 

@@ -449,6 +449,8 @@
             value["fly-zone"] = fly_zone;
             value["no-fly-zones"] = no_fly_zones;
             value["start-point"] = init_point;
+
+
             console.log(value);
 
             console.log("Values: ");
@@ -511,6 +513,10 @@
             value["no-fly-zones"] = no_fly_zones;
             value["start-point"] = start_point;
             value["paths"] = [];
+
+
+
+
             for (let path of all_paths) {
                 value["paths"].push(get_polygon_points(path));
             }
@@ -563,6 +569,20 @@
                     let pol = Object({type: 'polygon', overlay: make_one_polygon(no_fly_zone, NO_FLY_ZONE_COLOR)});
                     all_overlays.push(pol);
                 }
+
+                for (let key of Object.keys(data)) {
+                    if (key === "fly-zone" || key === "no-fly-zones" || key === "start-point") {
+                        continue;
+                    }
+                    console.log("Loading ", key);
+                    let element = document.getElementById(key);
+                    if (element.type === "checkbox") {
+                        element.checked = key === "true";
+                    } else {
+                        document.getElementById(key).value = data[key];
+                    }
+                }
+
                 console.log(data);
             })
 
@@ -663,6 +683,7 @@
                 <option value="own" default>Own</option>
                 <option value="gtsp">GTSP</option>
                 <option value="popcorn">POPCORN</option>
+                <option value="darp">mCPP optimized</option>
                 <option value="all">All</option>
             </select>
             <br>
@@ -682,9 +703,6 @@
             <label for="sweeping-step">Sweeping step [m]: </label> <input type="number" min="1" step="0.1"
                                                                           placeholder="altitude" id="sweeping-step"
                                                                           name="sweeping-step" required>
-          <label for="distance-for-rotation">Distance for rotation [m]: </label><input type="number" min="0.1" step="0.1" name="distance-for-rotation" id="distance-for-rotation" required>
-          <label for="max-extra-points">Maximum number of extra points in each segment: </label><input type="number" min="0" step="1" name="max-extra-points" id="max-extra-points" required>
-
             <label for="max-piece-area">Max decomposed polygon area: </label> <input type="number" min="1" step="any"
                                                                                      placeholder="Area"
                                                                                      name="max-piece-area"
@@ -738,6 +756,8 @@
                 <!-- TODO: make more fields (like maximum polygon area ...) here -->
             </fieldset>
             <br>
+            <label for="main-save-config">Save config? </label> <input type="checkbox" name="main-save-config" id="main-save-config"><br>
+            <label for="experiment-name">Experiment name: </label> <input type="text" name="experiment-name" id="experiment-name">
             <br>
             <button type="submit">Generate trajectories</button>
         </form>
@@ -745,6 +765,7 @@
         <form onsubmit="save_results(event)" id="save-data-settings">
             <label for="save-polygon">Save polygon? </label>  <input type="checkbox" name="save-polygon" id="save-polygon"><br>
             <label for="save-path">Save paths? </label>  <input type="checkbox" name="save-path" id="save-path"><br>
+            <label for="save-config">Save config? </label> <input type="checkbox" name="save-config" id="save-config"><br>
             <label for="path-folder">Save path to directory: </label> <input type="text" name="path-folder" id="path-folder">
             <label for="folder-name">Experiment name: </label><input type="text" name="folder-name" id="folder-name" placeholder="Folder name" required>
             <button type="submit">Save results</button>

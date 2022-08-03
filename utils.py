@@ -47,6 +47,7 @@ def get_path_properties(path: List[Tuple[float, float, float]]):
             print(f'{p[0]},{p[1]},', file=f)
 
     output = subprocess.check_output(['./energy_calculation', TEMP_CSV_FILE])
+    os.remove(TEMP_CSV_FILE)
     return tuple(map(float, output.decode('utf-8').split('\n')[-2].split(',')))
 
 

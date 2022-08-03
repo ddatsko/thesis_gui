@@ -1,11 +1,16 @@
 import os
 import pathlib
 import shutil
+import json
+
 
 FLY_ZONE_FILENAME = 'fly_zone.csv'
 NO_FLY_ZONES_FILENAME_TEMPLATE = 'no_fly_zone_{}.csv'
 START_POINT_FILENAME = 'start_point.csv'
 PATHS_FOLDER_PREFIX = 'path_'
+CONFIG_EXCLUDED_FIELDS = ['fly-zone', 'no-fly-zones', 'start-point']
+CONFIG_JSON_FILENAME = 'config.json'
+EXPERIMENTS_DIR = 'experiments/'
 
 
 def _save_points_to_file(polygon, filename):
@@ -17,6 +22,29 @@ def _save_points_to_file(polygon, filename):
 def _read_points_from_file(filename: str):
     with open(filename, 'r') as f:
         return list(map(lambda line: tuple(map(float, line.split(','))), filter(lambda x: x, f.readlines())))
+
+
+def save_config(directory, json_data):
+    directory = EXPERIMENTS_DIR + directory
+    print(json_data)
+    if not os.path.exists(directory):
+        os.mkdir(directory)
+
+    config_filename = directory + '/' + CONFIG_JSON_FILENAME
+    config_file_data = {key: value for key, value in json_data.items()}
+    with open(config_filename, 'w') as f:
+        json.dump(config_file_data, f)
+
+
+def read_config(directory) -> dict:
+    filename = directory.rstrip('/') + '/' + CONFIG_JSON_FILENAME
+    if not os.path.exists(filename):
+        return dict()
+    with open(filename, 'r') as f:
+        data = json.load(f)
+        return data
+
+
 
 
 def save_polygon(fly_zone, no_fly_zones, start_point, directory):
@@ -57,8 +85,8 @@ def save_paths(paths, directory, paths_directory):
         i += 1
 
 
-def load_paths_from_dir(directory: str):
-    directory = directory.rstrip('/') + '/'
+def load_polygons_from_dir(directory: str):
+    directory = EXPERIMENTS_DIR + directory.rstrip('/') + '/polygon/'
     if not os.path.exists(directory):
         return "Invalid directory path", 500
     files = os.listdir(directory)

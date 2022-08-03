@@ -15,7 +15,6 @@ def _generate_drones_paths_ros(generate_req):
 
     global last_generated_paths
     last_generated_paths = res.paths_gps
-    print(last_generated_paths)
 
     if not res.success:
         print("Unsuccessful service call")
@@ -25,7 +24,6 @@ def _generate_drones_paths_ros(generate_req):
 
 
 def plan_paths_own(json_data):
-    print("OWN PLANNER")
     generate_req = GeneratePathsRequest()
     generate_req.fly_zone.points = [Point32(float(x), float(y), 0.0) for x, y in json_data["fly-zone"]]
     generate_req.no_fly_zones = [Polygon([Point32(float(x), float(y), 0.0) for x, y in pol]) for pol in
@@ -38,12 +36,13 @@ def plan_paths_own(json_data):
     generate_req.decomposition_rotation = float(json_data["init-rotation"])
     generate_req.max_polygon_area = float(json_data["max-piece-area"] or 0)
     generate_req.drones_altitude = int(json_data["altitude"])
-    generate_req.distance_for_turning = float(json_data["distance-for-rotation"])
-    generate_req.max_number_of_extra_points = int(json_data["max-extra-points"])
     generate_req.unique_altitude_step = UNIQUE_ALTITUDE_STEP
 
-    # TODO: check this. Maybe, give the choice to user
-    generate_req.no_improvement_cycles_before_stop = 100
+    # TODO: move this to JS interface
+    generate_req.end_point_x_difference = 5
+
+    # TODO: Move this to JS interface too
+    generate_req.no_improvement_cycles_before_stop = 500
     generate_req.override_drone_parameters = bool(json_data["override-drone-spec"])
     if generate_req.override_drone_parameters:
         generate_req.drone_area = float(json_data["uav-area"] or 0)
@@ -55,7 +54,9 @@ def plan_paths_own(json_data):
     if generate_req.override_battery_model:
         generate_req.battery_cell_capacity = float(json_data["cell-capacity"] or 0)
         generate_req.battery_number_of_cells = int(json_data["cells-in-series"] or 0)
-    return _generate_drones_paths_ros(generate_req)
+    res = _generate_drones_paths_ros(generate_req)
+
+    return res
 
 
 def get_last_own_paths():

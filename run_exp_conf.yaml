@@ -1,0 +1,28 @@
+experiments_dir: "experiments"
+
+algorithms:
+  - "own_1"
+  - "own_3"
+  - "popcorn"
+  - "darp-3"
+  - "gtsp"
+
+
+experiments:
+  - "temesvar_nice_8_0"
+  - "cape"
+  - "temesvar_complex_15"
+  - "rect_8_0"
+
+output_file: "perf.csv"
+
+# Block for a specific algorithm configuration.
+# If "start_angle" and "angle_step" fields are present -- the algorithm will run multiple times with init_rotation from starting angle until pi with <angle_step> steps
+# Otherwise, the angle from saved configuration is used
+own_1:
+  start_angle: 0.0
+  angle_step: 0.1
+
+own_3:
+  start_angle: 0.0
+  angle_step: 0.1
