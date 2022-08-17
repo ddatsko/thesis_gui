@@ -5,9 +5,7 @@ from own_planner import plan_paths_own
 from optimized_darp_planner import plan_optimized_darp_paths
 from gtsp_planner import plan_path_gtsp
 
-
 EXPERIMENTS_DIR = 'experiments'
-
 
 CAPTION_TEMPLATE = "CAPTION"
 ROWS_TEMPLATE = "ROWS"
@@ -16,17 +14,38 @@ ALGORITHMS = (
     'own_1',
     'own_3',
     'popcorn',
-    'gtsp_1',
-    'darp_1'
+    'gtsp',
+    'darp-3'
 )
 
 VALUES_PER_ALGORITHM = (
     'energy',
-    'path_time',
+    # 'path_time',
     'path_length',
     'computation_time'
 )
 
+NICE_ALG_NAME = {
+    'own_1': 'Our 1 UAV',
+    'own_3': 'Our 3 UAVs',
+    'popcorn': 'POPCORN',
+    'gtsp': 'GTSP',
+    'darp-3': 'DARP 3 UAVS'
+}
+
+LATEX_FIELDS_MARK = {
+    'energy': 'E [Wh]',
+    'path_length': 'l [km]',
+    'computation_time': 't_c [s]'
+}
+
+
+def get_alg_name(alg):
+    return NICE_ALG_NAME[alg] if alg in NICE_ALG_NAME.keys() else alg
+
+
+def get_one_alg_row():
+    return ''.join(map(lambda val: f' & ${LATEX_FIELDS_MARK[val]}$', VALUES_PER_ALGORITHM))
 
 
 def strip_after_point(number, digits=2):
@@ -47,10 +66,10 @@ def reformat_data(col_name, data):
     elif col_name == 'path_length':
         # convert to km
         return strip_after_point(str(data / 1000), 2)
-
+    elif col_name == 'path_time':
+        return strip_after_point(str(data), 2)
 
     return str(data)
-
 
 
 TABLE_TEMPLATE = r"""
@@ -61,11 +80,11 @@ TABLE_TEMPLATE = r"""
    %\renewcommand{\arraystretch}{0.6} 
    \caption{CAPTION} 
    \vspace{-1em} 
-   \begin{tabular}{ccccccccccccccccc}
+   \begin{tabular}{COLUMN_DESC}
      \toprule 
-    \multirow{2}{*}{Polygon} & \multicolumn{4}{c}{Our 1 UAV} & \multicolumn{4}{c}{Our 3 UAVs} & \multicolumn{4}{c}{POPCORN} & \multicolumn{4}{c}{GTSP} \\
-    \cmidrule(lr){2-5} \cmidrule(lr){6-9}  \cmidrule(lr){10-13} \cmidrule(lr){14-17}
-     & E & t & l & s & E & t & l & s & E & t & l & s & E & t & l & s & E & t & l & s \\
+    \multirow{2}{*}{Polygon} & NAMES_ROW  \\
+    MULTICOL_DIST
+     COLUMN_NAMES \\
     \midrule 
     
     ROWS
@@ -75,10 +94,22 @@ TABLE_TEMPLATE = r"""
       } 
    \vspace{-2.0em}
 \end{table*} 
-"""
+""".replace('COLUMN_NAMES', get_one_alg_row() * len(ALGORITHMS)).replace('COLUMN_DESC', 'c' * (
+        len(VALUES_PER_ALGORITHM) * len(ALGORITHMS) + 1)) \
+    .replace('NAMES_ROW', ' & '.join(map(lambda alg: f"\\multicolumn{{{len(VALUES_PER_ALGORITHM)}}}{{c}}{{{get_alg_name(alg)}}}", ALGORITHMS))) \
+    .replace('MULTICOL_DIST', ' '.join(map(lambda
+                                               i: f"\\cmidrule(lr){{{i * len(VALUES_PER_ALGORITHM) + 2}-{i * len(VALUES_PER_ALGORITHM) + 1 + len(VALUES_PER_ALGORITHM)}}}",
+                                           range(len(ALGORITHMS)))))
+
+# \multicolumn{4}{c}{Our 1 UAV} & \multicolumn{4}{c}{Our 3 UAVs} & \multicolumn{4}{c}{POPCORN} & \multicolumn{4}{c}{GTSP}
 
 
-ROW_TEMPLATE = r"\multirow{1}{*}{EXPERIMENT} & % & % & % & % & % & % & % & % & % & % & % & % & % & % & % & % & % & % & % & % \\"
+ROW_TEMPLATE = r"\multirow{1}{*}{EXPERIMENT} COLS \\".replace('COLS',
+                                                              '& % ' * len(ALGORITHMS) * len(VALUES_PER_ALGORITHM))
+
+
+def readable_experiment(experiment: str):
+    return experiment.replace('_', '\\_')
 
 
 def get_algorithm_stats(df, experiment, algorithm_name):
@@ -106,7 +137,7 @@ def make_table(experiments_filename, experiments_to_select):
         new_row = ROW_TEMPLATE
         for val in line:
             new_row = new_row.replace('%', val, 1)
-        new_row = new_row.replace("EXPERIMENT", experiment)
+        new_row = new_row.replace("EXPERIMENT", readable_experiment(experiment))
         rows += new_row + '\n'
 
     table = TABLE_TEMPLATE
@@ -116,13 +147,13 @@ def make_table(experiments_filename, experiments_to_select):
 
 
 if __name__ == '__main__':
-    filename = 'experiments.csv'
+    filename = 'perf.csv'
     if len(sys.argv) > 1:
         filename = sys.argv[1]
 
     if len(sys.argv) > 2:
         experiments = list(sys.argv[2:])
     else:
-        experiments = ['cape', 'cape_2_directions']
+        experiments = ['cape', 'temesvar_nice_8_0', 'rect_8_0', 'temesvar_complex_15']
 
     make_table(filename, experiments)

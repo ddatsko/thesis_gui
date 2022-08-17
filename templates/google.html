@@ -559,6 +559,7 @@
             }).then(data => {
                 deleteAllShape();
                 clear_paths_from_map();
+                console.log("LOADED DATA: ", data);
 
                 let start_point_marker = make_marker(data['start-point']);
                 all_overlays.push(Object({type: google.maps.drawing.OverlayType.MARKER, overlay: start_point_marker}));

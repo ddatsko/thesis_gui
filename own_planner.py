@@ -4,7 +4,7 @@ import rospy
 
 last_generated_paths = None
 
-UNIQUE_ALTITUDE_STEP = 2
+UNIQUE_ALTITUDE_STEP = 0
 
 
 def _generate_drones_paths_ros(generate_req):
@@ -24,6 +24,7 @@ def _generate_drones_paths_ros(generate_req):
 
 
 def plan_paths_own(json_data):
+    print(json_data)
     generate_req = GeneratePathsRequest()
     generate_req.fly_zone.points = [Point32(float(x), float(y), 0.0) for x, y in json_data["fly-zone"]]
     generate_req.no_fly_zones = [Polygon([Point32(float(x), float(y), 0.0) for x, y in pol]) for pol in
@@ -36,13 +37,15 @@ def plan_paths_own(json_data):
     generate_req.decomposition_rotation = float(json_data["init-rotation"])
     generate_req.max_polygon_area = float(json_data["max-piece-area"] or 0)
     generate_req.drones_altitude = int(json_data["altitude"])
-    generate_req.unique_altitude_step = UNIQUE_ALTITUDE_STEP
+    generate_req.unique_altitude_step = 0
+    generate_req.decomposition_method = 2
+    generate_req.wall_distance = float(json_data['sweeping-step']) / 2
 
     # TODO: move this to JS interface
-    generate_req.end_point_x_difference = 5
+    generate_req.end_point_x_difference = 0
 
     # TODO: Move this to JS interface too
-    generate_req.no_improvement_cycles_before_stop = 500
+    generate_req.no_improvement_cycles_before_stop = 400
     generate_req.override_drone_parameters = bool(json_data["override-drone-spec"])
     if generate_req.override_drone_parameters:
         generate_req.drone_area = float(json_data["uav-area"] or 0)

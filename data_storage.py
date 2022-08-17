@@ -37,7 +37,7 @@ def save_config(directory, json_data):
 
 
 def read_config(directory) -> dict:
-    filename = directory.rstrip('/') + '/' + CONFIG_JSON_FILENAME
+    filename = EXPERIMENTS_DIR + '/' + directory.rstrip('/') + '/' + CONFIG_JSON_FILENAME
     if not os.path.exists(filename):
         return dict()
     with open(filename, 'r') as f:

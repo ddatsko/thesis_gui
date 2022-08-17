@@ -35,7 +35,8 @@ def save_results():
 def load_polygon():
     try:
         json_data = json.loads(request.data.decode('utf-8'))
-        return json.dumps({**load_polygons_from_dir(json_data['directory']), **read_config(json_data['directory'])}), 200
+        # return json.dumps(read_config(json_data['directory'])), 200
+        return json.dumps({**read_config(json_data['directory']), **load_polygons_from_dir(json_data['directory'])}), 200
     except Exception as e:
         print(e)
         return str(e), 500
@@ -43,7 +44,6 @@ def load_polygon():
 
 @app.route('/generate_trajectories', methods=['POST'])
 def generate_trajectories():
-    print(request.data.decode('utf-8'))
     try:
         json_data = json.loads(request.data.decode('utf-8'))
         if 'main-save-config' in json_data.keys() and json_data['main-save-config'] and json_data['experiment-name']:

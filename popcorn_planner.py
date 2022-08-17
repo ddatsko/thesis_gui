@@ -7,6 +7,7 @@ import tempfile
 import json
 import os
 import shutil
+import logging
 
 
 CSV_FILENAME = '__polygon.csv'
@@ -18,6 +19,9 @@ def plan_paths_wadl(json_data):
     Plan paths using wadl and reading data from request.data
     :return:
     """
+    logger = logging.getLogger()
+    logger.setLevel("WARNING")
+
     fly_zone = json_data["fly-zone"]
     home_point = (json_data["start-point"][0], json_data["start-point"][1])
 
@@ -32,7 +36,7 @@ def plan_paths_wadl(json_data):
     survey.setKeyPoints({'home': home_point})
 
     route_params = RouteParameters()
-    route_params['limit'] = 6000
+    route_params['limit'] = 60000
     route_params['speed'] = 5
     route_params['altitude'] = 20
 
