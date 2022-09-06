@@ -37,7 +37,7 @@ def plan_paths_wadl(json_data):
 
     route_params = RouteParameters()
     route_params['limit'] = 60000
-    route_params['speed'] = 5
+    route_params['speed'] = 9
     route_params['altitude'] = 20
 
     survey.addTask(CSV_FILENAME, step=float(json_data['sweeping-step']), home=['home'], routeParameters=route_params)
@@ -48,6 +48,8 @@ def plan_paths_wadl(json_data):
     solver_params['timeout'] = 60
 
     survey.setSolverParamters(solver_params)
+
+    os.remove(CSV_FILENAME)
 
     # Delete all the existing planned paths
     for p in filter(lambda x: x.startswith(CSV_FILENAME[:-4]), os.listdir(SURVEY_NAME)):

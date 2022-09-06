@@ -1,3 +1,4 @@
+#!/usr/bin/python
 from flask import Flask, render_template, request
 import json
 from own_planner import plan_paths_own, get_last_own_paths
@@ -10,6 +11,8 @@ from threading import Thread
 
 app = Flask(__name__)
 
+last_generated_paths_global = None
+last_generated_paths_method = ""
 
 @app.route('/')
 def hello_world():
@@ -67,6 +70,16 @@ def generate_trajectories():
         if not paths:
             return 'Error: No paths were generated', 500
 
+        # If paths were produced by not own algorithm -- create a list of PathSrv messages o
+        global last_generated_paths_method, last_generated_paths_global
+        last_generated_paths_method = algorithm
+        if algorithm != 'own':
+            last_generated_paths_global = compose_path_messages(json_data, paths)
+
+
+
+
+
         energies = []
         times = []
         lengths = []
@@ -106,7 +119,12 @@ def load_paths():
     paths_to_load = json_data["uav_topic"]
     services_used = set()
     res = [[] for _ in range(len(paths_to_load))]
-    last_generated_paths = get_last_own_paths()
+
+    global last_generated_paths_method, last_generated_paths_global
+    if last_generated_paths_method == 'own':
+        last_generated_paths = get_last_own_paths()
+    else:
+        last_generated_paths = last_generated_paths_global
 
     i = -1
     threads = []

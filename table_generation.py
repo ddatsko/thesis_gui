@@ -1,9 +1,5 @@
 import pandas as pd
 import sys
-from popcorn_planner import plan_paths_wadl
-from own_planner import plan_paths_own
-from optimized_darp_planner import plan_optimized_darp_paths
-from gtsp_planner import plan_path_gtsp
 
 EXPERIMENTS_DIR = 'experiments'
 
@@ -19,7 +15,8 @@ ALGORITHMS = (
 )
 
 VALUES_PER_ALGORITHM = (
-    'energy',
+    'max_energy',
+   # 'energy',
     # 'path_time',
     'path_length',
     'computation_time'
@@ -34,6 +31,7 @@ NICE_ALG_NAME = {
 }
 
 LATEX_FIELDS_MARK = {
+    'max_energy': 'E_{max}',
     'energy': 'E [Wh]',
     'path_length': 'l [km]',
     'computation_time': 't_c [s]'
@@ -59,7 +57,7 @@ def reformat_data(col_name, data):
         # Convert to seconds
         return strip_after_point(str(data / 1e9), 2)
 
-    elif col_name == 'energy':
+    elif col_name == 'energy' or col_name == 'max_energy':
         # Convert to Wh
         return strip_after_point(str(data / 3600), 3)
 
@@ -96,12 +94,11 @@ TABLE_TEMPLATE = r"""
 \end{table*} 
 """.replace('COLUMN_NAMES', get_one_alg_row() * len(ALGORITHMS)).replace('COLUMN_DESC', 'c' * (
         len(VALUES_PER_ALGORITHM) * len(ALGORITHMS) + 1)) \
-    .replace('NAMES_ROW', ' & '.join(map(lambda alg: f"\\multicolumn{{{len(VALUES_PER_ALGORITHM)}}}{{c}}{{{get_alg_name(alg)}}}", ALGORITHMS))) \
+    .replace('NAMES_ROW', ' & '.join(
+     map(lambda alg: f"\\multicolumn{{{len(VALUES_PER_ALGORITHM)}}}{{c}}{{{get_alg_name(alg)}}}", ALGORITHMS))) \
     .replace('MULTICOL_DIST', ' '.join(map(lambda
                                                i: f"\\cmidrule(lr){{{i * len(VALUES_PER_ALGORITHM) + 2}-{i * len(VALUES_PER_ALGORITHM) + 1 + len(VALUES_PER_ALGORITHM)}}}",
                                            range(len(ALGORITHMS)))))
-
-# \multicolumn{4}{c}{Our 1 UAV} & \multicolumn{4}{c}{Our 3 UAVs} & \multicolumn{4}{c}{POPCORN} & \multicolumn{4}{c}{GTSP}
 
 
 ROW_TEMPLATE = r"\multirow{1}{*}{EXPERIMENT} COLS \\".replace('COLS',
@@ -154,6 +151,6 @@ if __name__ == '__main__':
     if len(sys.argv) > 2:
         experiments = list(sys.argv[2:])
     else:
-        experiments = ['cape', 'temesvar_nice_8_0', 'rect_8_0', 'temesvar_complex_15']
+        experiments = ['cape', 'temesvar_nice_8_0', 'rect_8_0', 'temesvar_complex_15', 'temesvar_complex_10', 'temesvar_simple_6']
 
     make_table(filename, experiments)
