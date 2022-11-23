@@ -38,7 +38,7 @@ def plan_paths_own(json_data):
     generate_req.unique_altitude_step = 0
     generate_req.decomposition_method = 1
     generate_req.wall_distance = float(json_data['sweeping-step']) / 2
-    generate_req.min_sub_polygons_per_uav = int(json_data['max-pieces-per-uav'])
+    generate_req.min_sub_polygons_per_uav = int(json_data['min-pieces-per-uav'])
 
     # TODO: move this to JS interface
     generate_req.end_point_x_difference = 0
