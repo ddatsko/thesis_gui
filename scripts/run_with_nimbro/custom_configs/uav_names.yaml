@@ -20,6 +20,6 @@
 network:
 
   robot_names: [
-   uav60,  uav67, uav42, denys
+   uav67, denys
 
   ]

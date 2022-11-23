@@ -16,7 +16,7 @@ last_generated_paths_method = ""
 
 @app.route('/')
 def hello_world():
-    return render_template('google.html')
+    return render_template('map.html')
 
 
 @app.route('/save_results', methods=['POST'])
@@ -161,4 +161,4 @@ def get_services():
 
 
 if __name__ == '__main__':
-    app.run(host="127.0.0.1", port=5000)
+    app.run(host="127.0.0.1", port=5000, debug=True)
