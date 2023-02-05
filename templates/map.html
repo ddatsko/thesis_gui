@@ -61,9 +61,15 @@
                                                                           placeholder="Step" id="sweeping-step"
                                                                           name="sweeping-step" required>
             <label for="min-pieces-per-uav">Min pieces per uav: </label> <input type="number" min="0" step="1"
-                                                                                     placeholder="Pieces"
-                                                                                     name="min-pieces-per-uav"
-                                                                                     id="min-pieces-per-uav">
+                                                                                placeholder="Pieces"
+                                                                                name="min-pieces-per-uav"
+                                                                                id="min-pieces-per-uav">
+            <label for="max-path-energy">Max energy of one path [Wh]: </label> <input type="number" min="0" step="1"
+                                                                                      placeholder="Energy"
+                                                                                      name="max-path-energy"
+                                                                                      id="max-path-energy">
+
+
             <label for="init-rotation">Initial rotation [rad]: <span id="rotation-value"></span> </label><input
                 type="range" min="0" max="3.14"
                 step="0.01" name="init-rotation"
@@ -113,22 +119,29 @@
                 <!-- TODO: make more fields (like maximum polygon area ...) here -->
             </fieldset>
             <br>
-            <label for="main-save-config">Save config? </label> <input type="checkbox" name="main-save-config" id="main-save-config"><br>
-            <label for="experiment-name">Experiment name: </label> <input type="text" name="experiment-name" id="experiment-name">
+            <label for="main-save-config">Save config? </label> <input type="checkbox" name="main-save-config"
+                                                                       id="main-save-config"><br>
+            <label for="experiment-name">Experiment name: </label> <input type="text" name="experiment-name"
+                                                                          id="experiment-name">
             <br>
             <button type="submit" id="generate-button">Generate trajectories</button>
         </form>
 
         <form onsubmit="save_results(event)" id="save-data-settings">
-            <label for="save-polygon">Save polygon? </label>  <input type="checkbox" name="save-polygon" id="save-polygon"><br>
-            <label for="save-path">Save paths? </label>  <input type="checkbox" name="save-path" id="save-path"><br>
-            <label for="save-config">Save config? </label> <input type="checkbox" name="save-config" id="save-config"><br>
-            <label for="path-folder">Save path to directory: </label> <input type="text" name="path-folder" id="path-folder">
-            <label for="folder-name">Experiment name: </label><input type="text" name="folder-name" id="folder-name" placeholder="Folder name" required>
+            <label for="save-polygon">Save polygon? </label> <input type="checkbox" name="save-polygon"
+                                                                    id="save-polygon"><br>
+            <label for="save-path">Save paths? </label> <input type="checkbox" name="save-path" id="save-path"><br>
+            <label for="save-config">Save config? </label> <input type="checkbox" name="save-config"
+                                                                  id="save-config"><br>
+            <label for="path-folder">Save path to directory: </label> <input type="text" name="path-folder"
+                                                                             id="path-folder">
+            <label for="folder-name">Experiment name: </label><input type="text" name="folder-name" id="folder-name"
+                                                                     placeholder="Folder name" required>
             <button type="submit">Save results</button>
         </form>
         <form onsubmit="load_data(event)" id="data-load-form">
-            <label for="directory">Directory path: </label><input type="text" id="directory" name="directory" placeholder="/path/to/dir">
+            <label for="directory">Directory path: </label><input type="text" id="directory" name="directory"
+                                                                  placeholder="/path/to/dir">
             <button type="submit">Load polygons</button>
         </form>
     </div>

@@ -11,8 +11,10 @@ from mrs_msgs.msg import Reference
 from copy import deepcopy
 
 METERS_IN_DEGREE = 111319.5
-ENERGY_EXECUTABLE_PATH = '/home/mrs/CLionProjects/energy_with_toppra/build/energy_with_toppra'
-#ENERGY_EXECUTABLE_PATH = './energy_calculation'
+ENERGY_EXECUTABLE_PATH = '/home/mrs/RAL_coverage/energy_with_toppra/build/energy_with_toppra'
+
+
+# ENERGY_EXECUTABLE_PATH = './energy_calculation'
 
 class PathProperties:
     def __init__(self, energy, time):
@@ -23,7 +25,7 @@ class PathProperties:
 def gps_coordinates_to_meters(x, y, origin_x, origin_y):
     meters_in_long_degree = cos((origin_x / 180) * pi) * METERS_IN_DEGREE
     return y * meters_in_long_degree - origin_y * meters_in_long_degree, \
-        x * METERS_IN_DEGREE - origin_x * METERS_IN_DEGREE
+           x * METERS_IN_DEGREE - origin_x * METERS_IN_DEGREE
 
 
 def meters_to_gps_coordinates(x, y, origin_x, origin_y):
@@ -80,12 +82,12 @@ def compose_path_messages(json_data: dict, paths_points: List[List[List]]) -> Li
     common_message = PathSrvRequest()
 
     last_own_paths = get_last_own_paths()
-    
+
     common_message.path.header = last_own_paths[0].header
 
     # Fill in header fields
     # common_message.path.header.stamp = rospy.Time.now()
-    #common_message.path.header.frame_id = "latlon_origin"
+    # common_message.path.header.frame_id = "latlon_origin"
 
     common_message.path.fly_now = False
     common_message.path.use_heading = True

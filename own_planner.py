@@ -35,6 +35,7 @@ def plan_paths_own(json_data):
     generate_req.rotations_per_cell = int(json_data["rotations-per-cell"])
     generate_req.decomposition_rotation = float(json_data["init-rotation"])
     generate_req.drones_altitude = int(json_data["altitude"])
+    generate_req.max_single_path_energy = int(json_data["max-path-energy"])
     generate_req.unique_altitude_step = 0
     generate_req.decomposition_method = 1
     generate_req.wall_distance = float(json_data['sweeping-step']) / 2
