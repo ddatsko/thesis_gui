@@ -8,6 +8,7 @@ import json
 import os
 import shutil
 import logging
+from optimized_darp_planner import _add_travelling_to_path
 
 
 CSV_FILENAME = '__polygon.csv'
@@ -36,7 +37,7 @@ def plan_paths_wadl(json_data):
     survey.setKeyPoints({'home': home_point})
 
     route_params = RouteParameters()
-    route_params['limit'] = 60000
+    route_params['limit'] = 60
     route_params['speed'] = 9
     route_params['altitude'] = 20
 
@@ -69,5 +70,5 @@ def plan_paths_wadl(json_data):
         print("Route:", route)
         with open(routes_path + route, 'r') as f:
             res.append(list(map(lambda line: tuple(reversed(tuple(map(float, line.split(',')[:2])))), list(filter(lambda x: bool(x.strip()), f.readlines()))))[2:-2])
-    return res
+    return list(map(lambda path: _add_travelling_to_path(path, json_data['start-point']), res))
 

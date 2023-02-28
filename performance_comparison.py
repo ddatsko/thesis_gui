@@ -15,6 +15,8 @@ import yaml
 import json
 import re
 
+# Global parameter. Set False to generate paths with each algorithm. If True, will use already generated paths if such exist
+USE_GENERATED_PATHS = True
 EXPERIMENTS_LOG_FILE = 'experiments.csv'
 EXPERIMENTS_LOG_FILE_HEADER = ['algorithm', 'energy', 'path_time', 'path_length', 'n_turns', 'computation_time',
                                'max_energy', 'min_energy', 'n_paths']
@@ -24,6 +26,27 @@ EXPERIMENT_NAME_TO_FUNCTION = {
     'popcorn': popcorn_planner.plan_paths_wadl,
     'darp': optimized_darp_planner.plan_optimized_darp_paths
 }
+
+
+def save_paths_to_csv(filename: str, paths):
+    with open(filename, 'w') as f:
+        for path in paths:
+            for p in path:
+                print(f'{p[0]},{p[1]}', end='\n', file=f)
+            print('\n', end='', file=f)
+
+
+def read_paths_from_file(filename: str):
+    lines = open(filename, 'r').readlines()
+    paths = [[]]
+    for line in lines:
+        if not line.strip():
+            paths.append([])
+            continue
+        lon, lat = map(float, line.strip().split(','))
+        paths[-1].append([lon, lat])
+    paths.pop()
+    return paths
 
 
 def _create_experiments_log_file(filename):
@@ -67,9 +90,18 @@ def test_algorithm_many_times(json_data, algorithm: typing.Callable, start_angle
     return best_paths, best_res
 
 
+def get_algorithm_paths(json_data, experiment_name, algorithm_name, algorithm_function):
+    if USE_GENERATED_PATHS and os.path.exists((paths_file := f'experiments/{experiment_name}/{algorithm_name}.csv')):
+        return read_paths_from_file(paths_file)
+    else:
+        return algorithm_function(json_data)
+
+
 def run_one_algorithm(json_data, algorithm: typing.Callable) -> (list, dict):
     start = time.time_ns()
     paths = algorithm(json_data)
+    print(f'Numebr of paths: {len(paths)}')
+    save_paths_to_csv("test_paths.csv", paths)
     end = time.time_ns()
     total_path_metrics = get_total_paths_metrics(paths)
     total_path_metrics['computation_time'] = end - start
@@ -113,11 +145,14 @@ def compare_algorithms(config):
                         print(f"Altering key {key} to {value}")
                         exp_json_data[key] = value
 
+            get_paths_function = lambda data: get_algorithm_paths(data, experiment, algorithm, algorithm_function)
             if algorithm in config.keys() and 'start_angle' in config[algorithm] and 'angle_step' in config[algorithm]:
-                paths, res = test_algorithm_many_times(exp_json_data, algorithm_function, config[algorithm]['start_angle'],
+                paths, res = test_algorithm_many_times(exp_json_data, get_paths_function, config[algorithm]['start_angle'],
                                                        config[algorithm]['angle_step'])
             else:
-                paths, res = run_one_algorithm(exp_json_data, algorithm_function)
+                paths, res = run_one_algorithm(exp_json_data, get_paths_function)
+
+            save_paths_to_csv(f'experiments/{experiment}/{algorithm}.csv', paths)
             df = df.append({'experiment': experiment, 'algorithm': algorithm, **res}, ignore_index=True)
 
     df.to_csv(config['output_file'], index=False)
