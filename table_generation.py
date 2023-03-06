@@ -8,15 +8,15 @@ ROWS_TEMPLATE = "ROWS"
 
 ALGORITHMS = (
     'own_1',
-    'own_3',
-    'popcorn',
+    #'own_3',
+    #'popcorn',
     'gtsp',
-    'darp-3'
+    #'darp-3'
 )
 
 VALUES_PER_ALGORITHM = (
     'max_energy',
-   # 'energy',
+    'toppra_max_energy',
     # 'path_time',
     'path_length',
     'computation_time'
@@ -31,8 +31,9 @@ NICE_ALG_NAME = {
 }
 
 LATEX_FIELDS_MARK = {
-    'max_energy': 'E_{max}',
+    'max_energy': 'E_{our} [Wh]',
     'energy': 'E [Wh]',
+    'toppra_max_energy': 'E_{topp} [Wh]',
     'path_length': 'l [km]',
     'computation_time': 't_c [s]'
 }
@@ -57,9 +58,9 @@ def reformat_data(col_name, data):
         # Convert to seconds
         return strip_after_point(str(data / 1e9), 2)
 
-    elif col_name == 'energy' or col_name == 'max_energy':
+    elif col_name == 'energy' or col_name == 'max_energy' or col_name == 'toppra_max_energy':
         # Convert to Wh
-        return strip_after_point(str(data / 3600), 3)
+        return strip_after_point(str(data / 3600), 2)
 
     elif col_name == 'path_length':
         # convert to km
@@ -80,7 +81,7 @@ TABLE_TEMPLATE = r"""
    \vspace{-1em} 
    \begin{tabular}{COLUMN_DESC}
      \toprule 
-    \multirow{2}{*}{Polygon} & NAMES_ROW  \\
+    \multirow{2}{*}{Scenario} & NAMES_ROW  \\
     MULTICOL_DIST
      COLUMN_NAMES \\
     \midrule 
@@ -124,6 +125,9 @@ def make_table(experiments_filename, experiments_to_select):
     if not experiments_to_select:
         return
     df = pd.read_csv(experiments_filename)
+
+    df["max_energy"] = df.apply(lambda row: row["energy"] / 3 if row["algorithm"] == "popcorn" else row["max_energy"], axis=1)
+    
 
     rows = ""
 

@@ -2,7 +2,7 @@
   "planning-algorithm": "darp",
   "n-uavs": "3",
   "altitude": "10",
-  "rotations-per-cell": "3",
+  "rotations-per-cell": "5",
   "sweeping-step": "6",
   "min-pieces-per-uav": "1",
   "init-rotation": "0",

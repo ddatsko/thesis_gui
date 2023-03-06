@@ -4,7 +4,7 @@
   "altitude": "8",
   "rotations-per-cell": "3",
   "sweeping-step": "10",
-  "min-pieces-per-uav": "1",
+  "min-pieces-per-uav": "4",
   "init-rotation": "0",
   "override-drone-spec": true,
   "uav-area": "0.07",

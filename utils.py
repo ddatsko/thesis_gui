@@ -1,16 +1,20 @@
 import copy
 import subprocess
-from geometry_msgs.msg import Point, Point32
+from geometry_msgs.msg import Point, Point32, PoseStamped
 from math import cos, pi
 from typing import List, Tuple
 import os
 import rosservice
 import rospy
 from mrs_msgs.srv import PathSrv, PathSrvRequest
+from thesis_path_generator.srv import CalculateEnergy, CalculateEnergyRequest
 from mrs_msgs.msg import Reference
 from copy import deepcopy
+from nav_msgs.msg import Path
 
 METERS_IN_DEGREE = 111319.5
+# If the parameter below is set to True, ENERGY_EXECUTABLE_PATH should be set and lead to executable file for energy calculation
+ENERGY_CALCULATION_EXTERNAL = False
 ENERGY_EXECUTABLE_PATH = '/home/mrs/RAL_coverage/energy_with_toppra/build/energy_with_toppra'
 
 
@@ -44,17 +48,49 @@ def gps_point_from_meters(x, y, origin_x, origin_y) -> (float, float):
     return new_y, new_x
 
 
-def get_path_properties(path: List[Tuple[float, float, float]]):
-    TEMP_CSV_FILE = ".__temp.csv"
-    if os.path.exists(TEMP_CSV_FILE):
-        os.remove(TEMP_CSV_FILE)
-    with open(TEMP_CSV_FILE, 'w') as f:
-        for p in path:
-            print(f'{p[0]},{p[1]},', file=f)
+def _calculate_paths_energies_ros(calculate_req):
+    rospy.wait_for_service("/calculate_energy")
 
-    output = subprocess.check_output([ENERGY_EXECUTABLE_PATH, TEMP_CSV_FILE])
-    # os.remove(TEMP_CSV_FILE)
-    return tuple(map(float, output.decode('utf-8').split('\n')[-2].split(',')))
+    proxy = rospy.ServiceProxy("/calculate_energy", CalculateEnergy)
+    res = proxy(calculate_req)
+
+    if not res.success:
+        print("Unsuccessful service call")
+        return []
+    else:
+        return res.energies
+
+
+def get_path_properties(path: List[Tuple[float, float, float]]):
+    if ENERGY_CALCULATION_EXTERNAL:
+        TEMP_CSV_FILE = ".__temp.csv"
+        if os.path.exists(TEMP_CSV_FILE):
+            os.remove(TEMP_CSV_FILE)
+        with open(TEMP_CSV_FILE, 'w') as f:
+            for p in path:
+                print(f'{p[0]},{p[1]},', file=f)
+
+        output = subprocess.check_output([ENERGY_EXECUTABLE_PATH, TEMP_CSV_FILE])
+        # os.remove(TEMP_CSV_FILE)
+        return tuple(map(float, output.decode('utf-8').split('\n')[-2].split(',')))
+
+    else:
+        # TODO: remove hardcoded things from here
+        calculation_req = CalculateEnergyRequest()
+        calculation_req.override_drone_parameters = True
+        calculation_req.drone_area = 0.07
+        calculation_req.drone_mass = 3.2
+        calculation_req.number_of_propellers = 4
+        calculation_req.propeller_radius = 0.19
+        calculation_req.paths = [Path()]
+        for p in path:
+            calculation_req.paths[0].poses.append(PoseStamped())
+            calculation_req.paths[0].poses[-1].pose.position.x = p[0]
+            calculation_req.paths[0].poses[-1].pose.position.y = p[1]
+            calculation_req.paths[0].poses[-1].pose.position.z = p[2]
+        calculation_req.paths[0].header.frame_id = "latlon_origin"
+        ros_calculation_res = _calculate_paths_energies_ros(calculation_req)
+        return ros_calculation_res[0], 0, 0
 
 
 def send_path_to_service(path, service):
