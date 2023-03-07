@@ -1,19 +1,16 @@
 import typing
 
-import own_planner
-import popcorn_planner
-import gtsp_planner
-import optimized_darp_planner
+from .trajectory_planners import gtsp_planner, popcorn_planner, own_planner, optimized_darp_planner
 from utils import get_path_properties
 from math import pi
-from data_storage import read_config, load_polygons_from_dir
+from data_storage import read_config
 import os
 import pandas as pd
 import time
 import sys
 import yaml
-import json
 import re
+
 
 # Global parameter. Set False to generate paths with each algorithm. If True, will use already generated paths if such exist
 USE_GENERATED_PATHS = True
@@ -101,7 +98,7 @@ def run_one_algorithm(json_data, algorithm: typing.Callable) -> (list, dict):
     start = time.time_ns()
     paths = algorithm(json_data)
     print(f'Numebr of paths: {len(paths)}')
-    save_paths_to_csv("test_paths.csv", paths)
+    save_paths_to_csv("../test_paths.csv", paths)
     end = time.time_ns()
     total_path_metrics = get_total_paths_metrics(paths)
     total_path_metrics['computation_time'] = end - start
@@ -153,7 +150,8 @@ def compare_algorithms(config):
                 paths, res = run_one_algorithm(exp_json_data, get_paths_function)
 
             save_paths_to_csv(f'experiments/{experiment}/{algorithm}.csv', paths)
-            df = df.append({'experiment': experiment, 'algorithm': algorithm, **res}, ignore_index=True)
+            df = pd.concat([df, pd.DataFrame.from_records([{'experiment': experiment, 'algorithm': algorithm, **res}])])
+            #df = df.append({'experiment': experiment, 'algorithm': algorithm, **res}, ignore_index=True)
 
     df.to_csv(config['output_file'], index=False)
 

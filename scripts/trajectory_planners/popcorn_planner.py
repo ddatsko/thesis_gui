@@ -1,14 +1,10 @@
 from wadl.survey import Survey
 from wadl.solver.solver import SolverParameters
 from wadl.lib.route import RouteParameters
-from wadl.mission import MissionParameters, Mission
-from flask import request
-import tempfile
-import json
 import os
 import shutil
 import logging
-from optimized_darp_planner import _add_travelling_to_path
+from .optimized_darp_planner import _add_travelling_to_path
 
 
 CSV_FILENAME = '__polygon.csv'

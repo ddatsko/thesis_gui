@@ -1,22 +1,22 @@
 import pandas as pd
 import sys
 
-EXPERIMENTS_DIR = 'experiments'
+EXPERIMENTS_DIR = '../experiments'
 
 CAPTION_TEMPLATE = "CAPTION"
 ROWS_TEMPLATE = "ROWS"
 
 ALGORITHMS = (
-    'own_1',
-    #'own_3',
-    #'popcorn',
-    'gtsp',
-    #'darp-3'
+#    'own_1',
+    'own_3',
+    'popcorn',
+ #   'gtsp',
+    'darp-3'
 )
 
 VALUES_PER_ALGORITHM = (
     'max_energy',
-    'toppra_max_energy',
+    #'toppra_max_energy',
     # 'path_time',
     'path_length',
     'computation_time'

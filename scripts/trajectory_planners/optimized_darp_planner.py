@@ -1,7 +1,7 @@
 import json
 import subprocess
 import os
-from utils import gps_coordinates_to_meters
+from scripts.utils import gps_coordinates_to_meters
 
 _TEMP_FILE_FILENAME = ".__optimized_darp_input.json"
 
@@ -50,8 +50,9 @@ def plan_optimized_darp_paths(json_data):
                          json_data['sweeping-step'],
                          json_data['start-point'])
 
+    java_file_path = os.path.dirname(__file__) + '/mCPP-optimized-DARP.jar'
     # Now, run the solver
-    output = list(filter(lambda x: x, subprocess.check_output(['java', '-jar', 'mCPP-optimized-DARP.jar', _TEMP_FILE_FILENAME]).decode('utf-8').split('\n')))
+    output = list(filter(lambda x: x, subprocess.check_output(['java', '-jar', java_file_path, _TEMP_FILE_FILENAME]).decode('utf-8').split('\n')))
 
     os.remove(_TEMP_FILE_FILENAME)
 

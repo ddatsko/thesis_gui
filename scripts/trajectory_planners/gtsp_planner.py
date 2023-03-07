@@ -1,7 +1,6 @@
-import rospy
 from polygon_coverage_msgs.srv import PolygonServiceRequest, PolygonServiceResponse, PolygonService, \
-    PlannerService, PlannerServiceResponse, PlannerServiceRequest
-from utils import *
+    PlannerService, PlannerServiceRequest
+from scripts.utils import *
 from geometry_msgs.msg import Polygon
 
 
