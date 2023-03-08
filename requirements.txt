@@ -1,4 +1,8 @@
-Flask~=2.1.1
+Flask
 wadl-planner
 six
 pandas
+numpy
+PyYAML
+toppra
+matplotlib

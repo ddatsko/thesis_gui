@@ -1,9 +1,9 @@
 import typing
 
 from .trajectory_planners import gtsp_planner, popcorn_planner, own_planner, optimized_darp_planner
-from utils import get_path_properties
+from .energy_analysis import get_path_properties
 from math import pi
-from data_storage import read_config
+from scripts.data_storage import read_config
 import os
 import pandas as pd
 import time
@@ -11,8 +11,8 @@ import sys
 import yaml
 import re
 
-
-# Global parameter. Set False to generate paths with each algorithm. If True, will use already generated paths if such exist
+# Global parameter. Set False to generate paths with each algorithm.
+# If True, will use already generated paths if such exist
 USE_GENERATED_PATHS = True
 EXPERIMENTS_LOG_FILE = 'experiments.csv'
 EXPERIMENTS_LOG_FILE_HEADER = ['algorithm', 'energy', 'path_time', 'path_length', 'n_turns', 'computation_time',
@@ -53,21 +53,21 @@ def _create_experiments_log_file(filename):
 
 
 def get_total_paths_metrics(paths):
-    energy = time = length = num_of_turns = 0.0
+    energy = total_time = length = num_of_turns = 0.0
     min_energy = float('inf')
     max_energy = -min_energy
 
     for path in paths:
         path_energy, path_time, path_length, turns = get_path_properties(path)
         energy += path_energy
-        time += path_time
+        total_time += path_time
         length += path_length
         num_of_turns += turns
         min_energy = min(min_energy, path_energy)
         max_energy = max(max_energy, path_energy)
 
     return {'energy': energy, 'min_energy': min_energy, 'max_energy': max_energy, 'n_paths': len(paths),
-            'path_time': time, 'path_length': length, 'n_turns': num_of_turns}
+            'path_time': total_time, 'path_length': length, 'n_turns': num_of_turns}
 
 
 def test_algorithm_many_times(json_data, algorithm: typing.Callable, start_angle, angle_step):
@@ -144,14 +144,15 @@ def compare_algorithms(config):
 
             get_paths_function = lambda data: get_algorithm_paths(data, experiment, algorithm, algorithm_function)
             if algorithm in config.keys() and 'start_angle' in config[algorithm] and 'angle_step' in config[algorithm]:
-                paths, res = test_algorithm_many_times(exp_json_data, get_paths_function, config[algorithm]['start_angle'],
+                paths, res = test_algorithm_many_times(exp_json_data, get_paths_function,
+                                                       config[algorithm]['start_angle'],
                                                        config[algorithm]['angle_step'])
             else:
                 paths, res = run_one_algorithm(exp_json_data, get_paths_function)
 
             save_paths_to_csv(f'experiments/{experiment}/{algorithm}.csv', paths)
             df = pd.concat([df, pd.DataFrame.from_records([{'experiment': experiment, 'algorithm': algorithm, **res}])])
-            #df = df.append({'experiment': experiment, 'algorithm': algorithm, **res}, ignore_index=True)
+            # df = df.append({'experiment': experiment, 'algorithm': algorithm, **res}, ignore_index=True)
 
     df.to_csv(config['output_file'], index=False)
 

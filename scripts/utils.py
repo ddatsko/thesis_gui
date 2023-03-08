@@ -12,12 +12,10 @@ from mrs_msgs.msg import Reference
 from nav_msgs.msg import Path
 
 METERS_IN_DEGREE = 111319.5
-# If the parameter below is set to True, ENERGY_EXECUTABLE_PATH should be set and lead to executable file for energy calculation
-ENERGY_CALCULATION_EXTERNAL = False
+
+# Set to either 'own' or 'toppra'
+ENERGY_CALCULATION_METHOD = 'own'
 ENERGY_EXECUTABLE_PATH = '/home/mrs/RAL_coverage/energy_with_toppra/build/energy_with_toppra'
-
-
-# ENERGY_EXECUTABLE_PATH = './energy_calculation'
 
 class PathProperties:
     def __init__(self, energy, time):
@@ -45,50 +43,6 @@ def meter_point_from_gps(x, y, origin_x, origin_y) -> Point32:
 def gps_point_from_meters(x, y, origin_x, origin_y) -> (float, float):
     new_x, new_y = meters_to_gps_coordinates(x, y, origin_x, origin_y)
     return new_y, new_x
-
-
-def _calculate_paths_energies_ros(calculate_req):
-    rospy.wait_for_service("/calculate_energy")
-    proxy = rospy.ServiceProxy("/calculate_energy", CalculateEnergy)
-    res = proxy(calculate_req)
-    if not res.success:
-        print(f"Unsuccessful service call: {res.message}")
-        return []
-    else:
-        return res.energies
-
-
-def get_path_properties(path: List[Tuple[float, float, float]]):
-    if ENERGY_CALCULATION_EXTERNAL:
-        TEMP_CSV_FILE = "../.__temp.csv"
-        if os.path.exists(TEMP_CSV_FILE):
-            os.remove(TEMP_CSV_FILE)
-        with open(TEMP_CSV_FILE, 'w') as f:
-            for p in path:
-                print(f'{p[0]},{p[1]},', file=f)
-
-        output = subprocess.check_output([ENERGY_EXECUTABLE_PATH, TEMP_CSV_FILE])
-        # os.remove(TEMP_CSV_FILE)
-        return tuple(map(float, output.decode('utf-8').split('\n')[-2].split(',')))
-
-    else:
-        # TODO: remove hardcoded things from here
-        calculation_req = CalculateEnergyRequest()
-        calculation_req.override_drone_parameters = True
-        calculation_req.drone_area = 0.075
-        calculation_req.drone_mass = 3.2
-        calculation_req.number_of_propellers = 4
-        calculation_req.propeller_radius = 0.1905
-        calculation_req.average_acceleration = 2
-        calculation_req.allowed_path_deviation = 2
-        calculation_req.paths = [Path()]
-        for p in path:
-            calculation_req.paths[0].poses.append(PoseStamped())
-            calculation_req.paths[0].poses[-1].pose.position.x = p[1]
-            calculation_req.paths[0].poses[-1].pose.position.y = p[0]
-        calculation_req.paths[0].header.frame_id = "latlon_origin"
-        ros_calculation_res = _calculate_paths_energies_ros(calculation_req)
-        return ros_calculation_res[0], 0, 0, len(path)
 
 
 def send_path_to_service(path, service):

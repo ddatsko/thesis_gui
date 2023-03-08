@@ -33,7 +33,7 @@ def plan_paths_wadl(json_data):
     survey.setKeyPoints({'home': home_point})
 
     route_params = RouteParameters()
-    route_params['limit'] = 60
+    route_params['limit'] = 6000
     route_params['speed'] = 9
     route_params['altitude'] = 20
 
@@ -56,8 +56,8 @@ def plan_paths_wadl(json_data):
     except Exception as e:
         pass
 
-
     os.sync()
+
     routes_path = SURVEY_NAME + '/' + list(filter(lambda x: x.startswith(CSV_FILENAME[:-4]), os.listdir(SURVEY_NAME)))[0] + '/routes/'
     routes = os.listdir(routes_path)
 

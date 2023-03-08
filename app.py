@@ -5,9 +5,10 @@ from scripts.trajectory_planners.own_planner import plan_paths_own
 from scripts.trajectory_planners.gtsp_planner import plan_path_gtsp
 from scripts.trajectory_planners.popcorn_planner import plan_paths_wadl
 from scripts.utils import *
-from data_storage import save_polygon, save_paths, load_polygons_from_dir, save_config, read_config
+from scripts.data_storage import save_config, read_config
 from scripts.trajectory_planners.optimized_darp_planner import plan_optimized_darp_paths
 from threading import Thread
+from scripts.energy_analysis import get_path_properties
 
 app = Flask(__name__)
 
@@ -19,30 +20,11 @@ def hello_world():
     return render_template('map.html')
 
 
-@app.route('/save_results', methods=['POST'])
-def save_results():
-    try:
-        json_data = json.loads(request.data.decode('utf-8'))
-        if 'save-polygon' in json_data:
-            save_polygon(json_data['fly-zone'], json_data['no-fly-zones'], json_data['start-point'],
-                         'experiments/' + json_data['folder-name'])
-        if 'save-path' in json_data:
-            save_paths(json_data['paths'], json_data['folder-name'], json_data['path-folder'])
-
-    except Exception as e:
-        return str(e), 500
-    return "", 200
-
-
 @app.route('/load_polygon', methods=['POST'])
 def load_polygon():
-    try:
-        json_data = json.loads(request.data.decode('utf-8'))
-        # return json.dumps(read_config(json_data['directory'])), 200
-        return json.dumps({**read_config(json_data['directory']), **load_polygons_from_dir(json_data['directory'])}), 200
-    except Exception as e:
-        print(e)
-        return str(e), 500
+    # try:
+    json_data = json.loads(request.data.decode('utf-8'))
+    return json.dumps({**read_config(json_data['directory'])}), 200
 
 
 @app.route('/generate_trajectories', methods=['POST'])
