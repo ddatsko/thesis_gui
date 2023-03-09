@@ -1,7 +1,7 @@
 import typing
 
-from .trajectory_planners import gtsp_planner, popcorn_planner, own_planner, optimized_darp_planner
-from .energy_analysis import get_path_properties
+from scripts.trajectory_planners import gtsp_planner, popcorn_planner, own_planner, optimized_darp_planner
+from scripts.energy_analysis import get_path_properties
 from math import pi
 from scripts.data_storage import read_config
 import os
@@ -98,7 +98,7 @@ def run_one_algorithm(json_data, algorithm: typing.Callable) -> (list, dict):
     start = time.time_ns()
     paths = algorithm(json_data)
     print(f'Numebr of paths: {len(paths)}')
-    save_paths_to_csv("../test_paths.csv", paths)
+    save_paths_to_csv("test_paths.csv", paths)
     end = time.time_ns()
     total_path_metrics = get_total_paths_metrics(paths)
     total_path_metrics['computation_time'] = end - start

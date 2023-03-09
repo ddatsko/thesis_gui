@@ -35,10 +35,10 @@ ALLOWED_PATH_DEVIATION = 2
 # Parameters for TOPPRA energy estimation
 SAMPLING_DT = 0.1
 MAX_ACC_EPS = 0.2
-MAX_SPEED = 8
+MAX_SPEED = 8.1
 MAX_SPEED_EPS = 0.2
-HOVER_POWER_CONSUMPTION = 1
-MAX_SPEED_POWER_CONSUMPTION = 1
+HOVER_POWER_CONSUMPTION = 426.03
+MAX_SPEED_POWER_CONSUMPTION = 465.23
 DISTANCE_BETWEEN_WAYPOINTS = 20
 
 
@@ -62,9 +62,10 @@ def _path_from_gps_coordinates_to_meters(path: List[Tuple[float, float]]) -> np.
     """
     gps_origin_lat = path[0][1]
     gps_origin_lon = path[0][0]
+    res = []
     for p in path:
-        path.append(gps_coordinates_to_meters(p[1], p[0], gps_origin_lat, gps_origin_lon))
-    return np.array(path)
+        res.append(gps_coordinates_to_meters(p[1], p[0], gps_origin_lat, gps_origin_lon))
+    return np.array(res)
 
 
 def get_path_properties(path: List[Tuple[float, float, float]]):
@@ -72,7 +73,7 @@ def get_path_properties(path: List[Tuple[float, float, float]]):
     if ENERGY_CALCULATION_METHOD == 'toppra':
         # Create trajectory generation manager and fill it with parameters
         manager = TrajectoryGenerationManager2(4)
-        manager.max_acc = MAX_ACC
+        manager.max_acc = MAX_ACC - MAX_ACC_EPS
         manager.max_acc_eps = MAX_ACC_EPS
         manager.max_speed = MAX_SPEED
         manager.max_speed_eps = MAX_SPEED_EPS
@@ -82,6 +83,9 @@ def get_path_properties(path: List[Tuple[float, float, float]]):
         manager.max_heading_speed = 2
 
         path = _path_from_gps_coordinates_to_meters(path)
+        path = np.append(path, np.zeros((path.shape[0], 2)), axis=1)
+
+        print(f'path: {path}')
 
         path_equidist = add_waypoints_with_distance(path, DISTANCE_BETWEEN_WAYPOINTS)
         # Generate and sample the trajectory
@@ -94,7 +98,7 @@ def get_path_properties(path: List[Tuple[float, float, float]]):
         prev_x_energy = 0.0
         prev_y_energy = 0.0
 
-        for (v_x, v_y) in qds_sample:
+        for (v_x, v_y, _, _) in qds_sample:
             x_energy = UAV_MASS * v_x * v_x / 2
             y_energy = UAV_MASS * v_y * v_y / 2
 
@@ -113,7 +117,6 @@ def get_path_properties(path: List[Tuple[float, float, float]]):
         return res_energy, 0, 0, original_path_length
 
     elif ENERGY_CALCULATION_METHOD == 'own':
-        # TODO: remove hardcoded things from here
         calculation_req = CalculateEnergyRequest()
         calculation_req.override_drone_parameters = True
         calculation_req.drone_area = UAV_AREA
