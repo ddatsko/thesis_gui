@@ -7,6 +7,7 @@ from .utils import gps_coordinates_to_meters
 from .toppra_trajectory_generation.src.trajectory_generation_manager import TrajectoryGenerationManager2
 from .toppra_trajectory_generation.src.path_manipulations import add_waypoints_with_distance
 import numpy as np
+import math
 
 """
 NOTE: two methods of energy calculation are possible in this file.
@@ -40,6 +41,9 @@ MAX_SPEED_EPS = 0.2
 HOVER_POWER_CONSUMPTION = 426.03
 MAX_SPEED_POWER_CONSUMPTION = 465.23
 DISTANCE_BETWEEN_WAYPOINTS = 20
+# Max length of a path chunk. Used to split path into smaller chunks as toppra does not work well when therea re too many points
+MAX_PATH_CHUNK_LENGTH = 10
+
 
 
 def _calculate_paths_energies_ros(calculate_req):
@@ -71,50 +75,65 @@ def _path_from_gps_coordinates_to_meters(path: List[Tuple[float, float]]) -> np.
 def get_path_properties(path: List[Tuple[float, float, float]]):
     original_path_length = len(path)
     if ENERGY_CALCULATION_METHOD == 'toppra':
-        # Create trajectory generation manager and fill it with parameters
-        manager = TrajectoryGenerationManager2(4)
-        manager.max_acc = MAX_ACC - MAX_ACC_EPS
-        manager.max_acc_eps = MAX_ACC_EPS
-        manager.max_speed = MAX_SPEED
-        manager.max_speed_eps = MAX_SPEED_EPS
-        manager.max_vert_acc = 1
-        manager.max_vert_speed = 2
-        manager.max_heading_acc = 1
-        manager.max_heading_speed = 2
+        if len(path) > MAX_PATH_CHUNK_LENGTH:
+            chunks_num = math.ceil(len(path) / MAX_PATH_CHUNK_LENGTH)
+            chunk_size = math.ceil(len(path) / chunks_num)
 
-        path = _path_from_gps_coordinates_to_meters(path)
-        path = np.append(path, np.zeros((path.shape[0], 2)), axis=1)
+            cur_idx = 0
+            waypoints_chunks = []
+            while cur_idx < len(path) - 1:
+                last_chunk_idx = min(cur_idx + chunk_size, len(path) - 1)
+                waypoints_chunks.append(path[cur_idx:last_chunk_idx + 1])
+                cur_idx = last_chunk_idx
+        else:
+            waypoints_chunks = [path]
 
-        print(f'path: {path}')
+        total_energy = 0
+        for path in waypoints_chunks:
 
-        path_equidist = add_waypoints_with_distance(path, DISTANCE_BETWEEN_WAYPOINTS)
-        # Generate and sample the trajectory
-        trajectory = manager.plan_trajectory(path_equidist)
-        ts_sample = np.arange(0, trajectory.duration, SAMPLING_DT)
+            # Create trajectory generation manager and fill it with parameters
+            manager = TrajectoryGenerationManager2(4)
+            manager.max_acc = MAX_ACC - MAX_ACC_EPS
+            manager.max_acc_eps = MAX_ACC_EPS
+            manager.max_speed = MAX_SPEED
+            manager.max_speed_eps = MAX_SPEED_EPS
+            manager.max_vert_acc = 1
+            manager.max_vert_speed = 2
+            manager.max_heading_acc = 1
+            manager.max_heading_speed = 2
 
-        qds_sample = trajectory(ts_sample, 1)
+            path = _path_from_gps_coordinates_to_meters(path)
+            path = np.append(path, np.zeros((path.shape[0], 2)), axis=1)
 
-        res_energy = 0.0
-        prev_x_energy = 0.0
-        prev_y_energy = 0.0
+            path_equidist = add_waypoints_with_distance(path, DISTANCE_BETWEEN_WAYPOINTS)
+            # Generate and sample the trajectory
+            trajectory = manager.plan_trajectory(path_equidist)
+            ts_sample = np.arange(0, trajectory.duration, SAMPLING_DT)
 
-        for (v_x, v_y, _, _) in qds_sample:
-            x_energy = UAV_MASS * v_x * v_x / 2
-            y_energy = UAV_MASS * v_y * v_y / 2
+            qds_sample = trajectory(ts_sample, 1)
 
-            res_energy += abs(prev_x_energy - x_energy) + abs(prev_y_energy - y_energy)
-            prev_x_energy = x_energy
-            prev_y_energy = y_energy
+            res_energy = 0.0
+            prev_x_energy = 0.0
+            prev_y_energy = 0.0
 
-            total_speed = (v_x * v_x + v_y + v_y) ** 0.5
+            for (v_x, v_y, _, _) in qds_sample:
+                x_energy = UAV_MASS * v_x * v_x / 2
+                y_energy = UAV_MASS * v_y * v_y / 2
 
-            # If the speed is close enough to max speed, assume power consumption on optimal speed
-            if total_speed > MAX_SPEED - 1:
-                power = MAX_SPEED_POWER_CONSUMPTION
-            else:
-                power = HOVER_POWER_CONSUMPTION
-            res_energy += power + SAMPLING_DT
-        return res_energy, 0, 0, original_path_length
+                res_energy += abs(prev_x_energy - x_energy) + abs(prev_y_energy - y_energy)
+                prev_x_energy = x_energy
+                prev_y_energy = y_energy
+
+                total_speed = (v_x * v_x + v_y + v_y) ** 0.5
+
+                # If the speed is close enough to max speed, assume power consumption on optimal speed
+                if total_speed > MAX_SPEED - 1:
+                    power = MAX_SPEED_POWER_CONSUMPTION
+                else:
+                    power = HOVER_POWER_CONSUMPTION
+                res_energy += power + SAMPLING_DT
+            total_energy += res_energy
+        return total_energy, 0, 0, original_path_length
 
     elif ENERGY_CALCULATION_METHOD == 'own':
         calculation_req = CalculateEnergyRequest()
