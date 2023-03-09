@@ -1,0 +1,32 @@
+experiments_dir: "experiments"
+
+algorithms:
+  - "own_1"
+  #- "own_3"
+  #- "popcorn"
+  #- "darp-3"
+  #- "gtsp"
+
+experiments:
+  #- "temesvar_simple_6"
+  #- "temesvar_nice_8_0"
+  #- "cape"
+  - "temesvar_complex_10"
+  - "temesvar_complex_15"
+  - "rect_8_0"
+    #- "test"
+
+output_file: "own_hover.csv"
+
+# Block for a specific algorithm configuration.
+# If "start_angle" and "angle_step" fields are present -- the algorithm will run multiple times with init_rotation from starting angle until pi with <angle_step> steps
+# Otherwise, the angle from saved configuration is used
+# TODO: remove this as this is not needed anymore. This behaviour is reached by the node configuration file
+own_1:
+  start_angle: 0
+  angle_step: 10
+
+own_3:
+  start_angle: 0
+  angle_step: 10
+  #  max-piece-area: ""
