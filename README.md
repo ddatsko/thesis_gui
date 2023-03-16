@@ -58,3 +58,10 @@ To plan some paths, these conditions must be satisfied:
 
 If it is true, click the ```Generate trajectories``` button and wait until some error or paths are displayed.
 
+
+## Configuration saving and loading
+The application supports storing configurations and loading them afterwards.
+To store a configuration, just type its name into ```Experiment name``` field and click ```Generate trajectories button```. 
+This currently shows an error, but the configuration is actually stored in the disk.
+
+To load a configuration, just write its name into ```Directory path``` field and click ```Load polygons``` button.
