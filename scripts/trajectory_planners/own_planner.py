@@ -33,7 +33,7 @@ def plan_paths_own(json_data):
     generate_req.sweeping_step = float(json_data["sweeping-step"])
     generate_req.number_of_drones = int(json_data["n-uavs"])
     generate_req.rotations_per_cell = int(json_data["rotations-per-cell"])
-    generate_req.decomposition_rotation = float(json_data["init-rotation"])
+    generate_req.decomposition_rotation = 0#float(json_data["init-rotation"])
     generate_req.drones_altitude = int(json_data["altitude"])
 #    generate_req.max_single_path_energy = int(json_data["max-path-energy"])
     generate_req.unique_altitude_step = 0
@@ -43,7 +43,7 @@ def plan_paths_own(json_data):
     if int(json_data["n-uavs"]) == 1:
         generate_req.min_sub_polygons_per_uav = 1
     # If the bound is not present in data, juts use some large value to not constain this 
-    generate_req.max_single_path_energy = int(json_data['max-path-energy'] if 'max-path-energy' in json_data else 100000)
+    generate_req.max_single_path_energy = int(json_data['max-path-energy'] if 'max-path-energy' in json_data else 10000000000)
 
     # TODO: move this to JS interface
     generate_req.end_point_x_difference = 0
