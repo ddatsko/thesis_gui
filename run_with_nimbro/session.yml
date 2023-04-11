@@ -13,7 +13,7 @@ windows:
   - gui_app:
       layout: tiled
       panes:
-        - python ../../app.py 
+        - python ..//app.py 
   - nimbro:
       layout: tiled
       panes:

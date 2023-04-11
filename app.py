@@ -2,13 +2,8 @@
 from flask import Flask, render_template, request
 import json
 from scripts.trajectory_planners.own_planner import plan_paths_own
-from scripts.trajectory_planners.gtsp_planner import plan_path_gtsp
-from scripts.trajectory_planners.popcorn_planner import plan_paths_wadl
 from scripts.utils import *
-from scripts.data_storage import save_config, read_config
-from scripts.trajectory_planners.optimized_darp_planner import plan_optimized_darp_paths
 from threading import Thread
-from scripts.energy_analysis import get_path_properties
 
 app = Flask(__name__)
 
@@ -20,34 +15,15 @@ def hello_world():
     return render_template('map.html')
 
 
-@app.route('/load_polygon', methods=['POST'])
-def load_polygon():
-    # try:
-    json_data = json.loads(request.data.decode('utf-8'))
-    return json.dumps({**read_config(json_data['directory'])}), 200
-
-
 @app.route('/generate_trajectories', methods=['POST'])
 def generate_trajectories():
     try:
         json_data = json.loads(request.data.decode('utf-8'))
-        if 'main-save-config' in json_data.keys() and json_data['main-save-config'] and json_data['experiment-name']:
-            save_config(json_data['experiment-name'], json_data)
-            return "", 200
 
         paths = []
         algorithm = json_data['planning-algorithm']
         if algorithm == 'own':
             paths = plan_paths_own(json_data)
-        elif algorithm == 'gtsp':
-            paths = plan_path_gtsp(json_data)
-        elif algorithm == 'popcorn':
-            paths = plan_paths_wadl(json_data)
-        elif algorithm == 'darp':
-            paths = plan_optimized_darp_paths(json_data)
-        elif algorithm == 'all':
-            experiment_directory = input("Enter the directory to save experiment to: ")
-            # paths = compare_algorithm(json_data, write_data=True, experiment_dir=experiment_directory)
 
         if not paths:
             return 'Error: No paths were generated', 500
@@ -55,15 +31,13 @@ def generate_trajectories():
         # If paths were produced by not own algorithm -- create a list of PathSrv messages o
         global last_generated_paths_method, last_generated_paths_global
         last_generated_paths_method = algorithm
-        if algorithm != 'own':
-            last_generated_paths_global = compose_path_messages(json_data, paths)
 
         energies = []
         times = []
         lengths = []
 
         for path in paths:
-            energy, time, length, turns = get_path_properties(path)
+            energy, time, length = 0, 0, 0 
             energies.append(energy)
             times.append(time)
             lengths.append(length)
@@ -117,9 +91,6 @@ def load_paths():
         thread.start()
         threads.append(thread)
 
-        # success, msg = send_path_to_service(last_generated_paths[path_ind], service)
-        # res.append([len(res), "SUCCESS" if success else "ERROR", "Message: " + msg])
-
     for i in range(len(threads)):
         threads[i].join()
 
@@ -131,9 +102,10 @@ def get_services():
     try:
         valid_services = tuple(map(lambda x: x[0],
                                    filter(lambda x: x[1] == "mrs_msgs/PathSrv",
-                                          map(lambda x: (x, rosservice.get_service_type(x)) if 'logger' not in x else (
+                                          map(lambda x: (x, rosservice.get_service_type(x)) if 'logger' not in x and 'mavros' not in x else (
                                               "", ""), rosservice.get_service_list()))))
-    except Exception as _:
+    except Exception as e:
+        print(e)
         return json.dumps({'valid_services': []}), 200
     return json.dumps({"valid_services": valid_services}), 200
 

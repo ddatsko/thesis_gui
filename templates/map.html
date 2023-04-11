@@ -37,11 +37,11 @@
         <form onsubmit="generate_trajectories(event)" method="post" id="path-planning-settings">
             <label for="planning-algorithm">Planning algorithm: </label>
             <select id="planning-algorithm" name="planning-algorithm">
-                <option value="own" default>Own</option>
-                <option value="gtsp">GTSP</option>
-                <option value="popcorn">POPCORN</option>
-                <option value="darp">mCPP optimized</option>
-                <option value="all">All</option>
+                <option value="own">Own</option>
+{#                <option value="gtsp">GTSP</option>#}
+{#                <option value="popcorn">POPCORN</option>#}
+{#                <option value="darp">mCPP optimized</option>#}
+{#                <option value="all">All</option>#}
             </select>
             <br>
             <label for="n-uavs">Number of uavs: </label> <input type="number" min="0" step="1"
@@ -50,12 +50,12 @@
             <label for="altitude">Drones altitude [m]: </label> <input type="number" min="1" step="1"
                                                                        placeholder="altitude" id="altitude"
                                                                        name="altitude" required>
-            <label for="rotations-per-cell">Sweeping rotations in each cell: </label> <input type="number" min="1"
-                                                                                             step="1"
-                                                                                             placeholder="Rotations"
-                                                                                             id="rotations-per-cell"
-                                                                                             name="rotations-per-cell"
-                                                                                             required>
+{#            <label for="rotations-per-cell">Sweeping rotations in each cell: </label> <input type="number" min="1"#}
+{#                                                                                             step="1"#}
+{#                                                                                             placeholder="Rotations"#}
+{#                                                                                             id="rotations-per-cell"#}
+{#                                                                                             name="rotations-per-cell"#}
+{#                                                                                             required>#}
 
             <label for="sweeping-step">Sweeping step [m]: </label> <input type="number" min="1" step="0.1"
                                                                           placeholder="Step" id="sweeping-step"
@@ -64,12 +64,12 @@
                                                                                 placeholder="Pieces"
                                                                                 name="min-pieces-per-uav"
                                                                                 id="min-pieces-per-uav">
-            <label for="max-path-energy">Max energy of one path [Wh]: </label> <input type="number" min="0" step="1"
-                                                                                      placeholder="Energy"
-                                                                                      name="max-path-energy"
-                                                                                      id="max-path-energy">
+{#            <label for="max-path-energy">Max energy of one path [Wh]: </label> <input type="number" min="0" step="1"#}
+{#                                                                                      placeholder="Energy"#}
+{#                                                                                      name="max-path-energy"#}
+{#                                                                                      id="max-path-energy">#}
 
-<!--
+
             <label for="init-rotation">Initial rotation [rad]: <span id="rotation-value"></span> </label><input
                 type="range" min="0" max="3.14"
                 step="0.01" name="init-rotation"
@@ -82,56 +82,56 @@
             </svg>
             <br>
             <br>
--->
-            <fieldset>
-                <legend>Drone specification</legend>
-                <label for="override-drone-spec">Override drone specification? </label> <input type="checkbox"
-                                                                                               id="override-drone-spec"
-                                                                                               name="override-drone-spec">
-                <hr>
-                <label for="uav-area">Area of drone projection [m^2]: </label> <input type="number" min="0" step="any"
-                                                                                      placeholder="Drone area"
-                                                                                      id="uav-area" name="uav-area">
-                <label for="propeller-radius"> Propeller radius [m]: </label><input type="number" min="0" step="any"
-                                                                                    placeholder="Propeller radius"
-                                                                                    id="propeller-radius"
-                                                                                    name="propeller-radius">
-                <label for="n-propellers"> Number of propellers: </label><input type="number" min="1" step="1"
-                                                                                placeholder="N of propellers"
-                                                                                id="n-propellers" name="n-propellers">
-                <label for="uav-mass">UAV mass: [kg]: </label> <input type="number" min="0.01" step="any"
-                                                                      placeholder="Weight" id="uav-mass"
-                                                                      name="uav-mass">
-                <label for="acceleration">Acceleration [m/s^2]</label><input type="number" name="acceleration"
-                                                                             id="acceleration" step="any">
-            </fieldset>
 
-            <fieldset>
-                <legend>Battery model</legend>
-                <label for="override-battery-model">Override battery model parameters? </label><input type="checkbox"
-                                                                                                      name="override-battery-model"
-                                                                                                      id="override-battery-model">
-                <hr>
-                <label for="cells-in-series">Number of cells in series: </label><input type="number" min="1" step="1"
-                                                                                       id="cells-in-series"
-                                                                                       name="cells-in-series">
-                <label for="cell-capacity">Cell capacity [Wh]: </label><input type="number" min="0" id="cell-capacity"
-                                                                              name="cell-capacity">
-                <!-- TODO: make more fields (like maximum polygon area ...) here -->
-            </fieldset>
-            <br>
-            <label for="main-save-config">Save config? </label> <input type="checkbox" name="main-save-config"
-                                                                       id="main-save-config"><br>
-            <label for="experiment-name">Experiment name: </label> <input type="text" name="experiment-name"
-                                                                          id="experiment-name">
-            <br>
+{#            <fieldset>#}
+{#                <legend>Drone specification</legend>#}
+{#                <label for="override-drone-spec">Override drone specification? </label> <input type="checkbox"#}
+{#                                                                                               id="override-drone-spec"#}
+{#                                                                                               name="override-drone-spec">#}
+{#                <hr>#}
+{#                <label for="uav-area">Area of drone projection [m^2]: </label> <input type="number" min="0" step="any"#}
+{#                                                                                      placeholder="Drone area"#}
+{#                                                                                      id="uav-area" name="uav-area">#}
+{#                <label for="propeller-radius"> Propeller radius [m]: </label><input type="number" min="0" step="any"#}
+{#                                                                                    placeholder="Propeller radius"#}
+{#                                                                                    id="propeller-radius"#}
+{#                                                                                    name="propeller-radius">#}
+{#                <label for="n-propellers"> Number of propellers: </label><input type="number" min="1" step="1"#}
+{#                                                                                placeholder="N of propellers"#}
+{#                                                                                id="n-propellers" name="n-propellers">#}
+{#                <label for="uav-mass">UAV mass: [kg]: </label> <input type="number" min="0.01" step="any"#}
+{#                                                                      placeholder="Weight" id="uav-mass"#}
+{#                                                                      name="uav-mass">#}
+{#                <label for="acceleration">Acceleration [m/s^2]</label><input type="number" name="acceleration"#}
+{#                                                                             id="acceleration" step="any">#}
+{#            </fieldset>#}
+
+{#            <fieldset>#}
+{#                <legend>Battery model</legend>#}
+{#                <label for="override-battery-model">Override battery model parameters? </label><input type="checkbox"#}
+{#                                                                                                      name="override-battery-model"#}
+{#                                                                                                      id="override-battery-model">#}
+{#                <hr>#}
+{#                <label for="cells-in-series">Number of cells in series: </label><input type="number" min="1" step="1"#}
+{#                                                                                       id="cells-in-series"#}
+{#                                                                                       name="cells-in-series">#}
+{#                <label for="cell-capacity">Cell capacity [Wh]: </label><input type="number" min="0" id="cell-capacity"#}
+{#                                                                              name="cell-capacity">#}
+{#                <!-- TODO: make more fields (like maximum polygon area ...) here -->#}
+{#            </fieldset>#}
+{#            <br>#}
+{#            <label for="main-save-config">Save config? </label> <input type="checkbox" name="main-save-config"#}
+{#                                                                       id="main-save-config"><br>#}
+{#            <label for="experiment-name">Experiment name: </label> <input type="text" name="experiment-name"#}
+{#                                                                          id="experiment-name">#}
+{#            <br>#}
             <button type="submit" id="generate-button">Generate trajectories</button>
-        </form>
-        <form onsubmit="load_data(event)" id="data-load-form">
-            <label for="directory">Directory path: </label><input type="text" id="directory" name="directory"
-                                                                  placeholder="/path/to/dir">
-            <button type="submit">Load polygons</button>
-        </form>
+{#        </form>#}
+{#        <form onsubmit="load_data(event)" id="data-load-form">#}
+{#            <label for="directory">Directory path: </label><input type="text" id="directory" name="directory"#}
+{#                                                                  placeholder="/path/to/dir">#}
+{#            <button type="submit">Load polygons</button>#}
+{#        </form>#}
     </div>
 </div>
 <div id="map"></div>
