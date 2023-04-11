@@ -111,7 +111,7 @@ function buildColorPalette() {
 function initialize() {
     map = new google.maps.Map(document.getElementById('map'), {
         zoom: 15,
-        center: new google.maps.LatLng(50.111874, 14.418484),
+        center: new google.maps.LatLng(49.365541, 14.272948),
         // disableDefaultUI: true,
         zoomControl: true
     });
