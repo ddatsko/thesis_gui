@@ -13,7 +13,7 @@ import re
 
 # Global parameter. Set False to generate paths with each algorithm.
 # If True, will use already generated paths if such exist
-USE_GENERATED_PATHS = True
+USE_GENERATED_PATHS = False
 EXPERIMENTS_LOG_FILE = 'experiments.csv'
 EXPERIMENTS_LOG_FILE_HEADER = ['algorithm', 'energy', 'path_time', 'path_length', 'n_turns', 'computation_time',
                                'max_energy', 'min_energy', 'n_paths']

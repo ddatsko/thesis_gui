@@ -16,6 +16,11 @@
   "cell-capacity": "",
   "main-save-config": "on",
   "experiment-name": "temesvar_nice_8_0",
+  "override-mstsp-default-parameters": true,
+  "mstsp-solver-soft-threshold-start": 44000,
+  "mstsp-solver-soft-threshold-end": 60000,
+  "mstsp-solver-coeff-after-threshold": 10,
+  "mstsp-solver-max-energy-coefficient": 25,
   "fly-zone": [
     [
       49.362376149539415,

@@ -39,4 +39,7 @@ def read_config(directory) -> dict:
         return dict()
     with open(filename, 'r') as f:
         data = json.load(f)
+        data['fly-zone'] = data['fly-zone'][:-1]
+        for i in range(len(data['no-fly-zones'])):
+            data['no-fly-zones'][i] = data['no-fly-zones'][i][:-1]
         return data

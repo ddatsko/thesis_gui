@@ -9,13 +9,14 @@ ROWS_TEMPLATE = "ROWS"
 ALGORITHMS = (
 #    'own_1',
     'own_3',
-    'popcorn',
+    # 'popcorn',
  #   'gtsp',
     'darp-3'
 )
 
 VALUES_PER_ALGORITHM = (
-    'max_energy',
+    # 'max_energy',
+    'energy',
     #'toppra_max_energy',
     # 'path_time',
     'path_length',

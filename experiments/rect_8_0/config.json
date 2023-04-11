@@ -16,6 +16,11 @@
   "cell-capacity": "",
   "main-save-config": "on",
   "experiment-name": "rect_8_0",
+  "override-mstsp-default-parameters": true,
+  "mstsp-solver-soft-threshold-start": 95000,
+  "mstsp-solver-soft-threshold-end": 130000,
+  "mstsp-solver-coeff-after-threshold": 10,
+  "mstsp-solver-max-energy-coefficient": 15,
   "fly-zone": [
     [
       49.36412465688098,

@@ -15,7 +15,11 @@
   "cells-in-series": "",
   "cell-capacity": "",
   "main-save-config": "on",
-  "experiment-name": "temesvar_complex_15",
+  "override-mstsp-default-parameters": true,
+  "mstsp-solver-soft-threshold-start": 730000,
+  "mstsp-solver-soft-threshold-end": 800000,
+  "mstsp-solver-coeff-after-threshold": 10,
+  "mstsp-solver-max-energy-coefficient": 25,
   "fly-zone": [
     [
       49.36000395183057,

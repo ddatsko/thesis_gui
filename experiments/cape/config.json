@@ -16,6 +16,11 @@
   "cell-capacity": "",
   "main-save-config": "on",
   "experiment-name": "cape",
+  "override-mstsp-default-parameters": true,
+  "mstsp-solver-soft-threshold-start": 720000,
+  "mstsp-solver-soft-threshold-end": 800000,
+  "mstsp-solver-coeff-after-threshold": 50,
+  "mstsp-solver-max-energy-coefficient": 15,
   "fly-zone": [
     [
       -77.44720915223687,

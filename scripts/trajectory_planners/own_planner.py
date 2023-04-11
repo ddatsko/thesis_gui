@@ -33,9 +33,8 @@ def plan_paths_own(json_data):
     generate_req.sweeping_step = float(json_data["sweeping-step"])
     generate_req.number_of_drones = int(json_data["n-uavs"])
     generate_req.rotations_per_cell = int(json_data["rotations-per-cell"])
-    generate_req.decomposition_rotation = 0#float(json_data["init-rotation"])
+    generate_req.decomposition_rotation = 0 #float(json_data["init-rotation"])
     generate_req.drones_altitude = int(json_data["altitude"])
-#    generate_req.max_single_path_energy = int(json_data["max-path-energy"])
     generate_req.unique_altitude_step = 0
     generate_req.decomposition_method = 1
     generate_req.wall_distance = float(json_data['sweeping-step']) / 2
@@ -44,6 +43,15 @@ def plan_paths_own(json_data):
         generate_req.min_sub_polygons_per_uav = 1
     # If the bound is not present in data, juts use some large value to not constain this 
     generate_req.max_single_path_energy = int(json_data['max-path-energy'] if 'max-path-energy' in json_data else 10000000000)
+
+    # Set solver parameters to default ones if they are not present in the data
+    if 'override-mstsp-default-parameters' in json_data:
+        print("Overriding MSTSP solver constraints")
+        generate_req.override_mstsp_solver_parameters = bool(json_data['override-mstsp-default-parameters'])
+        generate_req.mstsp_solver_soft_threshold_start = float(json_data['mstsp-solver-soft-threshold-start'])
+        generate_req.mstsp_solver_soft_threshold_end = float(json_data['mstsp-solver-soft-threshold-end'])
+        generate_req.mstsp_solver_max_energy_coefficient = float(json_data['mstsp-solver-max-energy-coefficient'])
+        generate_req.mstsp_solver_coefficient_after_threshold = float(json_data['mstsp-solver-coeff-after-threshold'])
 
     # TODO: move this to JS interface
     generate_req.end_point_x_difference = 0
