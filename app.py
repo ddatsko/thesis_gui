@@ -69,6 +69,7 @@ def load_paths():
 
     json_data = json.loads(request.data.decode('utf-8'))
     paths_to_load = json_data["uav_topic"]
+    stop_at_waypoints = json_data["stop_at_waypoints"]
     services_used = set()
     res = [[] for _ in range(len(paths_to_load))]
 
@@ -86,6 +87,9 @@ def load_paths():
             res[i] = [len(res), "ERROR", "Empty service name"]
             continue
         services_used.add(service)
+
+        print(f"Stop at waypoints: ", stop_at_waypoints)
+        last_generated_paths[path_ind].stop_at_waypoints = stop_at_waypoints
 
         thread = Thread(target=load_paths_thread, args=(last_generated_paths[path_ind], service, res, i))
         thread.start()

@@ -60,7 +60,7 @@ function get_available_services() {
     });
 }
 
-function start_following_paths() {
+function start_following_paths(stop_at_waypoints=false) {
     let request = [];
     for (let i = 0; i < uavs_num; ++i) {
         let selection = document.getElementById(`path-${i}-target`);
@@ -68,7 +68,7 @@ function start_following_paths() {
     }
     let req = new Request('/load_paths', {
         method: 'POST',
-        body: JSON.stringify({'uav_topic': request})
+        body: JSON.stringify({'uav_topic': request, 'stop_at_waypoints': stop_at_waypoints})
     });
     console.log("Sending " + req.body);
 

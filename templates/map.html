@@ -31,7 +31,8 @@
             <ul style="list-style: none" id="targets-list">
 
             </ul>
-            <button onclick="start_following_paths()">Load paths to UAVs</button>
+            <button onclick="start_following_paths(false)">Load paths to UAVs</button>
+            <button onclick="start_following_paths(true)">Load paths to UAVs with stops</button>
         </div>
 
         <form onsubmit="generate_trajectories(event)" method="post" id="path-planning-settings">
@@ -75,10 +76,9 @@
                 step="0.01" name="init-rotation"
                 value="0"
                 id="init-rotation" onchange="update_rotation_value();" required>
-
             <br>
             <svg id="rotation-line" height="100px" width="100px">
-                <line x1="50" y1="25" x2="50" y2="75" style="stroke:rgb(255,0,0);stroke-width:2"/>
+                <line x1="50" y1="25" x2="50" y2="75" style="stroke:rgb(255,0,0);stroke-width:2"></line>
             </svg>
             <br>
             <br>
