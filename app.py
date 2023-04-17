@@ -4,21 +4,35 @@ import json
 from scripts.trajectory_planners.own_planner import plan_paths_own
 from scripts.utils import *
 from threading import Thread
+from scripts.data_storage import save_config, read_config
 
 app = Flask(__name__)
 
 last_generated_paths_global = None
 last_generated_paths_method = ""
 
+
 @app.route('/')
 def hello_world():
     return render_template('map.html')
+
+
+@app.route('/load_polygon',
+           methods=['POST'])
+def load_polygon():
+    print("Loading")
+    json_data = json.loads(request.data.decode('utf-8'))
+    return json.dumps({**read_config(json_data['directory'])}), 200
 
 
 @app.route('/generate_trajectories', methods=['POST'])
 def generate_trajectories():
     try:
         json_data = json.loads(request.data.decode('utf-8'))
+
+        if 'main-save-config' in json_data.keys() and json_data['main-save-config'] and json_data['experiment-name']:
+            print("Saving")
+            save_config(json_data['experiment-name'], json_data)
 
         paths = []
         algorithm = json_data['planning-algorithm']
@@ -37,7 +51,7 @@ def generate_trajectories():
         lengths = []
 
         for path in paths:
-            energy, time, length = 0, 0, 0 
+            energy, time, length = 0, 0, 0
             energies.append(energy)
             times.append(time)
             lengths.append(length)
@@ -66,7 +80,6 @@ def load_paths_thread(path, service, res, ind):
 
 @app.route('/load_paths', methods=['POST'])
 def load_paths():
-
     json_data = json.loads(request.data.decode('utf-8'))
     paths_to_load = json_data["uav_topic"]
     stop_at_waypoints = json_data["stop_at_waypoints"]
@@ -106,7 +119,8 @@ def get_services():
     try:
         valid_services = tuple(map(lambda x: x[0],
                                    filter(lambda x: x[1] == "mrs_msgs/PathSrv",
-                                          map(lambda x: (x, rosservice.get_service_type(x)) if 'logger' not in x and 'mavros' not in x else (
+                                          map(lambda x: (x, rosservice.get_service_type(
+                                              x)) if 'logger' not in x and 'mavros' not in x else (
                                               "", ""), rosservice.get_service_list()))))
     except Exception as e:
         print(e)
